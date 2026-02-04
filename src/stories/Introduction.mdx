@@ -1,0 +1,76 @@
+import { Meta } from '@storybook/blocks'
+
+<Meta title="Introduction" />
+
+# @hypurr/oracle-react
+
+React hooks and components for seamless Oracle integration in your DeFi applications.
+Built on top of [wagmi](https://wagmi.sh/) and [TanStack Query](https://tanstack.com/query/latest).
+
+## Features
+
+- **React Hooks** - `usePrice`, `useVaultOraclePrice`, and `usePriceQueryOptions`
+- **Dual Data Sources** - Seamless fallback from indexer to on-chain data
+- **Query Optimization** - Built-in prefetching and caching with TanStack Query
+- **Type-Safe** - Full TypeScript support
+- **Wagmi Integration** - Works seamlessly with wagmi and viem
+- **Provider Pattern** - Simple `OracleProvider` setup
+
+## Quick Start
+
+### 1. Create Oracle Configuration
+
+```tsx
+import { createOracleConfig } from '@hypurr/oracle-react'
+
+const oracleConfig = createOracleConfig({
+  chainId: 999,
+  routerAddress: '0x28675f23E149c25f4f672FAD05f4e71DAfb75048',
+  usdUnitOfAccount: '0x0000000000000000000000000000000000000348',
+  usdReferenceToken: '0xb8ce59fc3717ada4c02eadf9682a9e934f625ebb',
+})
+```
+
+### 2. Wrap Your App with OracleProvider
+
+```tsx
+import { OracleProvider } from '@hypurr/oracle-react'
+
+export function App() {
+  return (
+    <WagmiProvider config={wagmiConfig}>
+      <QueryClientProvider client={queryClient}>
+        <OracleProvider config={oracleConfig}>
+          <YourApp />
+        </OracleProvider>
+      </QueryClientProvider>
+    </WagmiProvider>
+  )
+}
+```
+
+### 3. Use the Hooks
+
+```tsx
+import { usePrice } from '@hypurr/oracle-react'
+
+function PriceDisplay() {
+  const { priceUSD, isLoading, error, source } = usePrice({
+    assetAddress: '0x...',
+    vaultAddress: '0x...',
+  })
+
+  if (isLoading) return <div>Loading...</div>
+  if (error) return <div>Error: {error.message}</div>
+
+  return <div>Price: ${priceUSD.toFixed(2)} ({source})</div>
+}
+```
+
+## Explore the Hooks
+
+Use the sidebar to explore each hook with interactive examples:
+
+- **usePrice** - Main hook for fetching asset prices
+- **useVaultOraclePrice** - Low-level hook for direct oracle queries
+- **usePriceQueryOptions** - Query options for prefetching
