@@ -1,0 +1,45 @@
+{
+  "name": "@hypurr/oracle-react",
+  "version": "0.1.0",
+  "description": "React hooks and components for Oracle integration",
+  "type": "module",
+  "main": "./dist/index.js",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsup",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest"
+  },
+  "peerDependencies": {
+    "@tanstack/react-query": ">=5.0.0",
+    "react": "^18",
+    "viem": "^2.0.0",
+    "wagmi": "^2.0.0"
+  },
+  "devDependencies": {
+    "@testing-library/react": "14.0.0",
+    "@types/react": "^18.2.14",
+    "@vitest/ui": "^4.0.18",
+    "jsdom": "^28.0.0",
+    "tsup": "^8.0.0",
+    "typescript": "^5.6.2",
+    "vitest": "^1.6.1"
+  },
+  "keywords": [
+    "hypurr",
+    "oracle",
+    "react",
+    "hooks"
+  ],
+  "license": "MIT"
+}
