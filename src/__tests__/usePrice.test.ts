@@ -2,6 +2,7 @@ import { renderHook } from '@testing-library/react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { useReadContracts } from 'wagmi'
 import { useOracleConfig } from '../context/useOracleConfig'
+import { useIndexerPrices } from '../hooks/useIndexerPrices'
 import { usePrice } from '../hooks/usePrice'
 import { useVaultOraclePrice } from '../hooks/useVaultOraclePrice'
 
@@ -17,6 +18,10 @@ vi.mock('../context/useOracleConfig', () => ({
 
 vi.mock('../hooks/useVaultOraclePrice', () => ({
   useVaultOraclePrice: vi.fn(),
+}))
+
+vi.mock('../hooks/useIndexerPrices', () => ({
+  useIndexerPrices: vi.fn(),
 }))
 
 // Test data
@@ -43,22 +48,33 @@ const MOCK_VAULT_ORACLE_RESULT = {
   source: 'onchain' as const,
 }
 
-const MOCK_VAULT_ORACLE_RESULT_INDEXER = {
-  priceUSD: 1234.56,
+const MOCK_INDEXER_PRICES_RESULT = {
+  data: {} as Record<`0x${string}`, number | null> | undefined,
   isLoading: false,
   isError: false,
+  isSuccess: true,
   error: null,
-  source: 'indexer' as const,
 }
 
 beforeEach(() => {
   vi.clearAllMocks()
+  // Default mock for useIndexerPrices - empty indexer data (no prices)
+  vi.mocked(useIndexerPrices).mockReturnValue(MOCK_INDEXER_PRICES_RESULT)
 })
 
 describe('usePrice', () => {
-  describe('returns indexer price when provided', () => {
-    it('should return indexer price with source "indexer"', async () => {
+  describe('returns indexer price when available', () => {
+    it('should return indexer price with source "indexer" when indexer has vault price', async () => {
       const indexerPrice = 999.99
+
+      // Mock indexer returning price for the vault
+      vi.mocked(useIndexerPrices).mockReturnValue({
+        data: { [MOCK_VAULT_ADDRESS]: indexerPrice },
+        isLoading: false,
+        isError: false,
+        isSuccess: true,
+        error: null,
+      })
 
       vi.mocked(useOracleConfig).mockReturnValue(MOCK_CONFIG)
       vi.mocked(useReadContracts).mockReturnValue({
@@ -81,17 +97,14 @@ describe('usePrice', () => {
         refetch: vi.fn(),
       } as any)
 
-      vi.mocked(useVaultOraclePrice).mockReturnValue({
-        ...MOCK_VAULT_ORACLE_RESULT_INDEXER,
-        priceUSD: indexerPrice,
-      })
+      vi.mocked(useVaultOraclePrice).mockReturnValue(MOCK_VAULT_ORACLE_RESULT)
 
       const { result } = renderHook(() =>
         usePrice({
           assetAddress: MOCK_ASSET_ADDRESS,
+          vaultAddress: MOCK_VAULT_ADDRESS,
           oracleAddress: MOCK_ORACLE_ADDRESS,
           unitOfAccount: MOCK_UNIT_OF_ACCOUNT,
-          indexerPrice,
         }),
       )
 
@@ -228,8 +241,8 @@ describe('usePrice', () => {
       )
 
       // Verify useReadContracts was called with enabled: false
-      const callArgs = vi.mocked(useReadContracts).mock.calls[0][0]
-      expect(callArgs.query?.enabled).toBe(false)
+      const callArgs = vi.mocked(useReadContracts).mock.calls[0]?.[0]
+      expect(callArgs?.query?.enabled).toBe(false)
     })
   })
 
@@ -568,7 +581,18 @@ describe('usePrice', () => {
       expect(result.current.source).toBe('vaultOracle')
     })
 
-    it('should keep "indexer" source as "indexer"', async () => {
+    it('should return "indexer" source when indexer has price for vault', async () => {
+      const indexerPrice = 1234.56
+
+      // Mock indexer returning price for the vault
+      vi.mocked(useIndexerPrices).mockReturnValue({
+        data: { [MOCK_VAULT_ADDRESS]: indexerPrice },
+        isLoading: false,
+        isError: false,
+        isSuccess: true,
+        error: null,
+      })
+
       vi.mocked(useOracleConfig).mockReturnValue(MOCK_CONFIG)
       vi.mocked(useReadContracts).mockReturnValue({
         data: undefined,
@@ -590,20 +614,18 @@ describe('usePrice', () => {
         refetch: vi.fn(),
       } as any)
 
-      vi.mocked(useVaultOraclePrice).mockReturnValue({
-        ...MOCK_VAULT_ORACLE_RESULT,
-        source: 'indexer',
-      })
+      vi.mocked(useVaultOraclePrice).mockReturnValue(MOCK_VAULT_ORACLE_RESULT)
 
       const { result } = renderHook(() =>
         usePrice({
           assetAddress: MOCK_ASSET_ADDRESS,
+          vaultAddress: MOCK_VAULT_ADDRESS,
           oracleAddress: MOCK_ORACLE_ADDRESS,
           unitOfAccount: MOCK_UNIT_OF_ACCOUNT,
-          indexerPrice: 1234.56,
         }),
       )
 
+      expect(result.current.priceUSD).toBe(indexerPrice)
       expect(result.current.source).toBe('indexer')
     })
 
@@ -684,8 +706,8 @@ describe('usePrice', () => {
       )
 
       // Verify useReadContracts was called with enabled: false
-      const callArgs = vi.mocked(useReadContracts).mock.calls[0][0]
-      expect(callArgs.query?.enabled).toBe(false)
+      const callArgs = vi.mocked(useReadContracts).mock.calls[0]?.[0]
+      expect(callArgs?.query?.enabled).toBe(false)
     })
   })
 

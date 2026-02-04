@@ -201,6 +201,7 @@ const oracleConfig = createOracleConfig({
   usdReferenceToken: '0xb8ce59fc3717ada4c02eadf9682a9e934f625ebb',
   indexerUrl: 'https://indexer-hyperevm-api-prod.up.railway.app',
   indexerStaleTime: 30_000,
+  vaultLensAddress: '0x0eaDDE9EfCf1540dcA8f94e813E12db55f8405a8',
 })
 
 const queryClient = new QueryClient({

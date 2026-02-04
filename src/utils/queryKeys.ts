@@ -62,4 +62,17 @@ export const oracleKeys = {
     vaultAddress?: Address
     oracleAddress?: Address
   }) => [...oracleKeys.all(), 'vaultOracle', params] as const,
+
+  /**
+   * Query key factory for indexer price queries.
+   * Includes chainId for cache isolation per network.
+   *
+   * @param params - Query parameters
+   * @param params.chainId - The blockchain chain ID
+   * @returns Stable query key for indexer price queries
+   */
+  indexerPrices: (params: { chainId: number }) => [...oracleKeys.all(), 'indexerPrices', params] as const,
+
+  vaultInfo: (params: { chainId: number; vaultAddress: Address }) =>
+    [...oracleKeys.all(), 'vaultInfo', params] as const,
 }
