@@ -1,31 +1,56 @@
 import type { Meta, StoryObj } from '@storybook/react'
+import { useReadContracts } from 'wagmi'
+import { eVaultImplementationAbi } from '../abis'
 import { useVaultOraclePrice } from '../hooks/useVaultOraclePrice'
 
-const EXAMPLE_ADDRESSES = {
-  USDC: '0xb8ce59fc3717ada4c02eadf9682a9e934f625ebb',
-  WETH: '0x4200000000000000000000000000000000000006',
-  ORACLE: '0x28675f23E149c25f4f672FAD05f4e71DAfb75048',
-  USD_UNIT_OF_ACCOUNT: '0x0000000000000000000000000000000000000348',
+const DEMO_VAULTS = {
+  USDC: '0xC200AaB602Cd7046389B5C8FB088884323F8dD0f',
+  WHYPE: '0xF73c654d468f5485bF15F3470B78851a49257704',
+  UBTC: '0x8A4545827DF5446Ba120B904e5306e58acCA4E89',
 }
 
 interface UseVaultOraclePriceDemoProps {
-  assetAddress: `0x${string}`
-  oracleAddress: `0x${string}`
-  unitOfAccount: `0x${string}`
+  vaultAddress: `0x${string}`
   enabled: boolean
 }
 
 function UseVaultOraclePriceDemo({
-  assetAddress,
-  oracleAddress,
-  unitOfAccount,
+  vaultAddress,
   enabled,
 }: UseVaultOraclePriceDemoProps) {
+  const {
+    data: vaultData,
+    isLoading: isVaultLoading,
+  } = useReadContracts({
+    contracts: [
+      {
+        address: vaultAddress,
+        abi: eVaultImplementationAbi,
+        functionName: 'oracle',
+      },
+      {
+        address: vaultAddress,
+        abi: eVaultImplementationAbi,
+        functionName: 'unitOfAccount',
+      },
+      {
+        address: vaultAddress,
+        abi: eVaultImplementationAbi,
+        functionName: 'asset',
+      },
+    ],
+    query: { enabled },
+  })
+
+  const oracleAddress = vaultData?.[0]?.result as `0x${string}` | undefined
+  const unitOfAccount = vaultData?.[1]?.result as `0x${string}` | undefined
+  const assetAddress = vaultData?.[2]?.result as `0x${string}` | undefined
+
   const result = useVaultOraclePrice({
     assetAddress,
     oracleAddress,
     unitOfAccount,
-    enabled,
+    enabled: enabled && !!oracleAddress && !!unitOfAccount && !!assetAddress,
   })
 
   const { priceUSD, isLoading, isError, error, priceInUoA, uoaToUSD, source } = result
@@ -41,15 +66,31 @@ function UseVaultOraclePriceDemo({
         marginBottom: '1rem',
         border: '1px solid rgba(250, 250, 252, 0.05)'
       }}>
-        <h4 style={{ margin: '0 0 0.5rem', fontSize: 14, color: 'rgb(145, 145, 160)' }}>Parameters</h4>
+        <h4 style={{ margin: '0 0 0.5rem', fontSize: 14, color: 'rgb(145, 145, 160)' }}>Vault Input</h4>
         <pre style={{ margin: 0, fontSize: 12, overflow: 'auto', background: 'rgb(38, 38, 44)', padding: '0.75rem', borderRadius: 6, color: 'rgb(145, 145, 160)', fontFamily: "'DM Mono', monospace" }}>
-{JSON.stringify({
-  assetAddress,
-  oracleAddress,
-  unitOfAccount,
-  enabled,
-}, null, 2)}
+{JSON.stringify({ vaultAddress, enabled }, null, 2)}
         </pre>
+      </div>
+
+      <div style={{ 
+        background: 'rgb(48, 48, 55)', 
+        padding: '1rem', 
+        borderRadius: 8,
+        marginBottom: '1rem',
+        border: '1px solid rgba(250, 250, 252, 0.05)'
+      }}>
+        <h4 style={{ margin: '0 0 0.5rem', fontSize: 14, color: 'rgb(145, 145, 160)' }}>Fetched from Vault (on-chain)</h4>
+        {isVaultLoading ? (
+          <div style={{ color: 'rgb(145, 145, 160)' }}>Loading vault data...</div>
+        ) : (
+          <pre style={{ margin: 0, fontSize: 12, overflow: 'auto', background: 'rgb(38, 38, 44)', padding: '0.75rem', borderRadius: 6, color: 'rgb(145, 145, 160)', fontFamily: "'DM Mono', monospace" }}>
+{JSON.stringify({
+  oracleAddress: oracleAddress || 'N/A',
+  unitOfAccount: unitOfAccount || 'N/A',
+  assetAddress: assetAddress || 'N/A',
+}, null, 2)}
+          </pre>
+        )}
       </div>
 
       <div style={{ 
@@ -151,17 +192,10 @@ applications that need precise on-chain values.
     },
   },
   argTypes: {
-    assetAddress: {
-      control: 'text',
-      description: 'The asset address to get price for',
-    },
-    oracleAddress: {
-      control: 'text',
-      description: 'The vault oracle address',
-    },
-    unitOfAccount: {
-      control: 'text',
-      description: 'The vault unit of account address',
+    vaultAddress: {
+      control: 'select',
+      options: Object.values(DEMO_VAULTS),
+      description: 'The vault address to fetch oracle data from',
     },
     enabled: {
       control: 'boolean',
@@ -174,34 +208,45 @@ export default meta
 type Story = StoryObj<typeof UseVaultOraclePriceDemo>
 
 export const Default: Story = {
-  name: 'Default (On-Chain)',
+  name: 'USDC Vault',
   args: {
-    assetAddress: EXAMPLE_ADDRESSES.USDC as `0x${string}`,
-    oracleAddress: EXAMPLE_ADDRESSES.ORACLE as `0x${string}`,
-    unitOfAccount: EXAMPLE_ADDRESSES.USD_UNIT_OF_ACCOUNT as `0x${string}`,
+    vaultAddress: DEMO_VAULTS.USDC as `0x${string}`,
     enabled: true,
   },
   parameters: {
     docs: {
       description: {
-        story: 'Fetches price directly from on-chain oracle contracts.',
+        story: 'Fetches oracle address from USDC vault, then queries price on-chain.',
       },
     },
   },
 }
 
-export const OnChainOnly: Story = {
-  name: 'On-Chain Only',
+export const WHYPEVault: Story = {
+  name: 'WHYPE Vault',
   args: {
-    assetAddress: EXAMPLE_ADDRESSES.USDC as `0x${string}`,
-    oracleAddress: EXAMPLE_ADDRESSES.ORACLE as `0x${string}`,
-    unitOfAccount: EXAMPLE_ADDRESSES.USD_UNIT_OF_ACCOUNT as `0x${string}`,
+    vaultAddress: DEMO_VAULTS.WHYPE as `0x${string}`,
     enabled: true,
   },
   parameters: {
     docs: {
       description: {
-        story: 'The hook fetches price data directly from on-chain contracts.',
+        story: 'Fetches oracle address from WHYPE vault, then queries price on-chain.',
+      },
+    },
+  },
+}
+
+export const UBTCVault: Story = {
+  name: 'UBTC Vault',
+  args: {
+    vaultAddress: DEMO_VAULTS.UBTC as `0x${string}`,
+    enabled: true,
+  },
+  parameters: {
+    docs: {
+      description: {
+        story: 'Fetches oracle address from UBTC vault, then queries price on-chain.',
       },
     },
   },
@@ -210,32 +255,13 @@ export const OnChainOnly: Story = {
 export const Disabled: Story = {
   name: 'Disabled Query',
   args: {
-    assetAddress: EXAMPLE_ADDRESSES.USDC as `0x${string}`,
-    oracleAddress: EXAMPLE_ADDRESSES.ORACLE as `0x${string}`,
-    unitOfAccount: EXAMPLE_ADDRESSES.USD_UNIT_OF_ACCOUNT as `0x${string}`,
+    vaultAddress: DEMO_VAULTS.USDC as `0x${string}`,
     enabled: false,
   },
   parameters: {
     docs: {
       description: {
         story: 'When enabled is false, no queries are made and default values are returned.',
-      },
-    },
-  },
-}
-
-export const WETHPrice: Story = {
-  name: 'WETH Price',
-  args: {
-    assetAddress: EXAMPLE_ADDRESSES.WETH as `0x${string}`,
-    oracleAddress: EXAMPLE_ADDRESSES.ORACLE as `0x${string}`,
-    unitOfAccount: EXAMPLE_ADDRESSES.USD_UNIT_OF_ACCOUNT as `0x${string}`,
-    enabled: true,
-  },
-  parameters: {
-    docs: {
-      description: {
-        story: 'Example with a higher-value asset like WETH.',
       },
     },
   },

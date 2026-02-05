@@ -2,6 +2,8 @@
 
 React hooks for Euler vault data on HyperEVM. Built on [wagmi](https://wagmi.sh/) and [TanStack Query](https://tanstack.com/query).
 
+> **Breaking Change (v0.2.0):** `routerAddress` removed from config. Oracle addresses are now fetched automatically from each vault. See [Migration Guide](./docs/AGENT_INTEGRATION.md#breaking-changes-v020).
+
 ## Core Hook: `useVaultInfo`
 
 Fetches vault data with **intelligent source selection**:
@@ -55,10 +57,10 @@ import { VaultProvider, createVaultConfig, useVaultInfo } from '@hypurr/vaults'
 
 const config = createVaultConfig({
   chainId: 999,
-  routerAddress: '0x28675f23E149c25f4f672FAD05f4e71DAfb75048',
   usdUnitOfAccount: '0x0000000000000000000000000000000000000348',
   usdReferenceToken: '0xb8ce59fc3717ada4c02eadf9682a9e934f625ebb',
 })
+// Oracle addresses are fetched automatically from each vault
 
 // Wrap app
 <VaultProvider config={config}>

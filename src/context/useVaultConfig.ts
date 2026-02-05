@@ -16,7 +16,6 @@ import { VaultContext } from './VaultProvider'
  *   const config = useVaultConfig()
  *
  *   console.log('Chain ID:', config.chainId)
- *   console.log('Router:', config.routerAddress)
  *
  *   return <div>Using vault on chain {config.chainId}</div>
  * }

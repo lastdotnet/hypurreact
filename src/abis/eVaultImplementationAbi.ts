@@ -15,4 +15,11 @@ export const eVaultImplementationAbi = [
     inputs: [],
     outputs: [{ internalType: 'address', name: '', type: 'address' }],
   },
+  {
+    name: 'asset',
+    type: 'function',
+    stateMutability: 'view',
+    inputs: [],
+    outputs: [{ internalType: 'address', name: '', type: 'address' }],
+  },
 ] as const satisfies Abi

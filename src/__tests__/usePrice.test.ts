@@ -30,12 +30,10 @@ const MOCK_VAULT_ADDRESS = '0x0987654321098765432109876543210987654321' as const
 const MOCK_ORACLE_ADDRESS = '0xabcdefabcdefabcdefabcdefabcdefabcdefabcd' as const
 const MOCK_UNIT_OF_ACCOUNT = '0xfedcbafedcbafedcbafedcbafedcbafedcbafed' as const
 const MOCK_USD_UNIT_OF_ACCOUNT = '0x0000000000000000000000000000000000000348' as const
-const MOCK_ROUTER_ADDRESS = '0x28675f23E149c25f4f672FAD05f4e71DAfb75048' as const
 const MOCK_USD_REFERENCE_TOKEN = '0xb8ce59fc3717ada4c02eadf9682a9e934f625ebb' as const
 
 const MOCK_CONFIG = {
   chainId: 1,
-  routerAddress: MOCK_ROUTER_ADDRESS,
   usdUnitOfAccount: MOCK_USD_UNIT_OF_ACCOUNT,
   usdReferenceToken: MOCK_USD_REFERENCE_TOKEN,
 }

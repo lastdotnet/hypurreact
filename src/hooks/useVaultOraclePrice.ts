@@ -102,7 +102,7 @@ export function useVaultOraclePrice({
     isError: isUoaInUSDError,
     error: uoaInUSDError,
   } = useReadContract({
-    address: config.routerAddress,
+    address: oracleAddress,
     abi: eulerOraclePriceAbi,
     functionName: 'getQuote',
     args:
@@ -111,7 +111,12 @@ export function useVaultOraclePrice({
         : undefined,
     chainId: effectiveChainId,
     query: {
-      enabled: enabled && !!unitOfAccount && !isUSDUnitOfAccount && actualUoaDecimals !== undefined,
+      enabled:
+        enabled &&
+        !!oracleAddress &&
+        !!unitOfAccount &&
+        !isUSDUnitOfAccount &&
+        actualUoaDecimals !== undefined,
     },
   })
 
