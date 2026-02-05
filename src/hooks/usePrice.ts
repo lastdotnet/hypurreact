@@ -3,8 +3,8 @@
 import { type Address, getAddress } from 'viem'
 import { useReadContracts } from 'wagmi'
 import { eVaultImplementationAbi } from '../abis'
-import type { OracleConfig } from '../config'
-import { useOracleConfig } from '../context'
+import type { VaultConfig } from '../config'
+import { useVaultConfig } from '../context'
 import { useIndexerPrices } from './useIndexerPrices'
 import { useVaultOraclePrice } from './useVaultOraclePrice'
 
@@ -15,7 +15,7 @@ export interface UsePriceParams {
   unitOfAccount?: Address
   chainId?: number
   enabled?: boolean
-  config?: OracleConfig
+  config?: VaultConfig
 }
 
 export interface UsePriceResult {
@@ -35,7 +35,7 @@ export function usePrice({
   enabled = true,
   config: configOverride,
 }: UsePriceParams): UsePriceResult {
-  const contextConfig = useOracleConfig()
+  const contextConfig = useVaultConfig()
   const config = configOverride ?? contextConfig
 
   const effectiveChainId = chainId ?? config.chainId

@@ -1,2 +1,2 @@
-export { createOracleConfig } from './createOracleConfig'
-export type { OracleConfig } from './types'
+export { createVaultConfig } from './createVaultConfig'
+export type { VaultConfig } from './types'

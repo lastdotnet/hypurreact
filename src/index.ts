@@ -1,8 +1,8 @@
-export { createOracleConfig } from './config'
-export type { OracleConfig } from './config'
-export { oracleKeys } from './utils'
-export { OracleProvider, useOracleConfig } from './context'
-export type { OracleProviderProps } from './context'
+export { createVaultConfig } from './config'
+export type { VaultConfig } from './config'
+export { vaultKeys } from './utils'
+export { VaultProvider, useVaultConfig } from './context'
+export type { VaultProviderProps } from './context'
 export {
   useVaultOraclePrice,
   usePrice,

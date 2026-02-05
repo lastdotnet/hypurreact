@@ -1,36 +1,36 @@
-import type { OracleConfig } from './types'
+import type { VaultConfig } from './types'
 
-export function createOracleConfig(config: OracleConfig): OracleConfig {
+export function createVaultConfig(config: VaultConfig): VaultConfig {
   if (typeof config.chainId !== 'number') {
-    throw new Error('createOracleConfig: chainId is required and must be a number')
+    throw new Error('createVaultConfig: chainId is required and must be a number')
   }
 
   if (!config.routerAddress) {
-    throw new Error('createOracleConfig: routerAddress is required')
+    throw new Error('createVaultConfig: routerAddress is required')
   }
 
   if (!config.usdUnitOfAccount) {
-    throw new Error('createOracleConfig: usdUnitOfAccount is required')
+    throw new Error('createVaultConfig: usdUnitOfAccount is required')
   }
 
   if (!config.usdReferenceToken) {
-    throw new Error('createOracleConfig: usdReferenceToken is required')
+    throw new Error('createVaultConfig: usdReferenceToken is required')
   }
 
   if (config.indexerUrl !== undefined) {
     try {
       new URL(config.indexerUrl)
     } catch {
-      throw new Error('createOracleConfig: indexerUrl must be a valid URL')
+      throw new Error('createVaultConfig: indexerUrl must be a valid URL')
     }
   }
 
   if (config.indexerStaleTime !== undefined && config.indexerStaleTime < 0) {
-    throw new Error('createOracleConfig: indexerStaleTime must be >= 0')
+    throw new Error('createVaultConfig: indexerStaleTime must be >= 0')
   }
 
   if (config.onIndexerError !== undefined && typeof config.onIndexerError !== 'function') {
-    throw new Error('createOracleConfig: onIndexerError must be a function')
+    throw new Error('createVaultConfig: onIndexerError must be a function')
   }
 
   return {

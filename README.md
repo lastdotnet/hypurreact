@@ -1,39 +1,38 @@
-# @hypurr/oracle-react
+# @hypurr/vaults
 
-[![npm version](https://img.shields.io/npm/v/@hypurr/oracle-react.svg)](https://www.npmjs.com/package/@hypurr/oracle-react)
+[![npm version](https://img.shields.io/npm/v/@hypurr/vaults.svg)](https://www.npmjs.com/package/@hypurr/vaults)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Build Status](https://img.shields.io/github/actions/workflow/status/marsfoundation/hypurr-lending-interface/ci.yml)](https://github.com/marsfoundation/hypurr-lending-interface)
 
-React hooks and components for seamless Oracle integration in your DeFi applications. Built on top of [wagmi](https://wagmi.sh/) and [TanStack Query](https://tanstack.com/query/latest), providing a familiar developer experience for Web3 developers.
+React hooks for Euler vault data on HyperEVM. Built on top of [wagmi](https://wagmi.sh/) and [TanStack Query](https://tanstack.com/query/latest).
 
 ## Features
 
-- 🪝 **React Hooks** - `usePrice`, `usePriceQueryOptions`, and more for price data fetching
-- 🔄 **Dual Data Sources** - Seamless fallback from indexer to on-chain data
+- 🪝 **React Hooks** - `useVaultInfo`, `usePrice`, `useIndexerPrices`, and more
+- 🔄 **Dual Data Sources** - Indexer-first with VaultLens on-chain fallback
+- 📊 **Category-Based Fetching** - Request only the vault data you need
 - ⚡ **Query Optimization** - Built-in prefetching and caching with TanStack Query
 - 🎯 **Type-Safe** - Full TypeScript support with comprehensive type definitions
 - 🔌 **Wagmi Integration** - Works seamlessly with wagmi and viem
-- 🎨 **Provider Pattern** - Simple `OracleProvider` setup for your app
-- ⚙️ **Per-Hook Config** - Override global settings on a per-hook basis
 
 ## Installation
 
 ### Using pnpm (recommended)
 
 ```bash
-pnpm add @hypurr/oracle-react
+pnpm add @hypurr/vaults
 ```
 
 ### Using npm
 
 ```bash
-npm install @hypurr/oracle-react
+npm install @hypurr/vaults
 ```
 
 ### Using yarn
 
 ```bash
-yarn add @hypurr/oracle-react
+yarn add @hypurr/vaults
 ```
 
 ### Peer Dependencies
@@ -52,15 +51,15 @@ pnpm add react@^18 @tanstack/react-query@>=5.0.0 wagmi@^2.0.0 viem@^2.0.0
 
 ## Quick Start
 
-### 1. Create Oracle Configuration
+### 1. Create Vault Configuration
 
-First, create your Oracle configuration with the Euler HyperEVM settings:
+First, create your vault configuration with the Euler HyperEVM settings:
 
 ```typescript
-import { createOracleConfig } from '@hypurr/oracle-react'
+import { createVaultConfig } from '@hypurr/vaults'
 
 // Euler HyperEVM configuration
-const oracleConfig = createOracleConfig({
+const vaultConfig = createVaultConfig({
   chainId: 999,
   routerAddress: '0x28675f23E149c25f4f672FAD05f4e71DAfb75048',
   usdUnitOfAccount: '0x0000000000000000000000000000000000000348',
@@ -68,14 +67,14 @@ const oracleConfig = createOracleConfig({
 })
 ```
 
-### 2. Wrap Your App with OracleProvider
+### 2. Wrap Your App with VaultProvider
 
 ```typescript
-import { OracleProvider } from '@hypurr/oracle-react'
+import { VaultProvider } from '@hypurr/vaults'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { WagmiProvider } from 'wagmi'
 import { config as wagmiConfig } from './wagmi.config'
-import { oracleConfig } from './oracle.config'
+import { vaultConfig } from './oracle.config'
 
 const queryClient = new QueryClient()
 
@@ -83,9 +82,9 @@ export function App() {
   return (
     <WagmiProvider config={wagmiConfig}>
       <QueryClientProvider client={queryClient}>
-        <OracleProvider config={oracleConfig}>
+        <VaultProvider config={vaultConfig}>
           <YourApp />
-        </OracleProvider>
+        </VaultProvider>
       </QueryClientProvider>
     </WagmiProvider>
   )
@@ -95,7 +94,7 @@ export function App() {
 ### 3. Use the usePrice Hook
 
 ```typescript
-import { usePrice } from '@hypurr/oracle-react'
+import { usePrice } from '@hypurr/vaults'
 
 export function PriceDisplay() {
   const { priceUSD, isLoading, error } = usePrice({
@@ -117,7 +116,7 @@ export function PriceDisplay() {
 Fetch price data by providing a vault address. The hook automatically fetches the oracle and unit of account from the vault:
 
 ```typescript
-import { usePrice } from '@hypurr/oracle-react'
+import { usePrice } from '@hypurr/vaults'
 
 export function VaultAssetPrice({ vaultAddress, assetAddress }) {
   const { priceUSD, isLoading, isError, error, source } = usePrice({
@@ -142,7 +141,7 @@ export function VaultAssetPrice({ vaultAddress, assetAddress }) {
 Provide indexer price data for faster response with automatic fallback to on-chain oracle:
 
 ```typescript
-import { usePrice } from '@hypurr/oracle-react'
+import { usePrice } from '@hypurr/vaults'
 
 export function TokenPriceWithIndexer({ assetAddress, vaultAddress, indexerPrice }) {
   const { priceUSD, isLoading, isError, source } = usePrice({
@@ -171,7 +170,7 @@ export function TokenPriceWithIndexer({ assetAddress, vaultAddress, indexerPrice
 Skip vault config fetching by providing oracle and unit of account directly:
 
 ```typescript
-import { usePrice } from '@hypurr/oracle-react'
+import { usePrice } from '@hypurr/vaults'
 
 export function DirectOraclePrice({ assetAddress, oracleAddress, unitOfAccount }) {
   const { priceUSD, isLoading, source } = usePrice({
@@ -195,7 +194,7 @@ export function DirectOraclePrice({ assetAddress, oracleAddress, unitOfAccount }
 Prefetch price data before rendering components to improve UX:
 
 ```typescript
-import { usePriceQueryOptions } from '@hypurr/oracle-react'
+import { usePriceQueryOptions } from '@hypurr/vaults'
 import { useQueryClient } from '@tanstack/react-query'
 
 export function PrefetchButton({ assetAddress, vaultAddress }) {
@@ -219,7 +218,7 @@ export function PrefetchButton({ assetAddress, vaultAddress }) {
 Override global config for specific hooks:
 
 ```typescript
-import { usePrice } from '@hypurr/oracle-react'
+import { usePrice } from '@hypurr/vaults'
 
 export function CustomPrice({ assetAddress, vaultAddress }) {
   const { priceUSD } = usePrice(
@@ -241,19 +240,19 @@ export function CustomPrice({ assetAddress, vaultAddress }) {
 
 ### Components
 
-#### OracleProvider
+#### VaultProvider
 
-Context provider that wraps your application with Oracle functionality. Must wrap any components that use Oracle hooks.
+Context provider that wraps your application with vault configuration. Must wrap any components that use vault hooks.
 
 **Props:**
-- `config` (OracleConfig) - **Required.** Oracle configuration object
-- `children` (ReactNode) - Child components that will have access to the Oracle context
+- `config` (VaultConfig) - **Required.** Vault configuration object
+- `children` (ReactNode) - Child components that will have access to the vault context
 
 **Example:**
 ```typescript
-import { OracleProvider, createOracleConfig } from '@hypurr/oracle-react'
+import { VaultProvider, createVaultConfig } from '@hypurr/vaults'
 
-const oracleConfig = createOracleConfig({
+const vaultConfig = createVaultConfig({
   chainId: 999,
   routerAddress: '0x28675f23E149c25f4f672FAD05f4e71DAfb75048',
   usdUnitOfAccount: '0x0000000000000000000000000000000000000348',
@@ -262,9 +261,9 @@ const oracleConfig = createOracleConfig({
 
 export function App() {
   return (
-    <OracleProvider config={oracleConfig}>
+    <VaultProvider config={vaultConfig}>
       <YourApp />
-    </OracleProvider>
+    </VaultProvider>
   )
 }
 ```
@@ -284,7 +283,7 @@ Unified hook to get asset price in USD using vault-specific oracles. Automatical
   - `chainId?` (number) - Chain ID (optional, uses context if not provided)
   - `enabled?` (boolean) - Whether the query is enabled (default: true)
   - `indexerPrice?` (number | null) - Price from indexer API (used as primary source, on-chain as fallback)
-  - `config?` (OracleConfig) - Optional config override (uses context if not provided)
+  - `config?` (VaultConfig) - Optional config override (uses context if not provided)
 
 **Returns:**
 - `priceUSD` (number) - Asset price in USD
@@ -314,7 +313,7 @@ Low-level hook to get asset price in USD via vault's oracle. Supports dual-sourc
   - `chainId?` (number) - Chain ID (optional, uses context if not provided)
   - `enabled?` (boolean) - Whether the query is enabled (default: true)
   - `indexerPrice?` (number | null) - Price from indexer API (used as primary source)
-  - `config?` (OracleConfig) - Optional config override (uses context if not provided)
+  - `config?` (VaultConfig) - Optional config override (uses context if not provided)
 
 **Returns:**
 - `priceUSD` (number) - Asset price in USD
@@ -353,7 +352,7 @@ Get TanStack Query options for price queries. Useful for prefetching or custom q
 
 **Example:**
 ```typescript
-import { usePriceQueryOptions } from '@hypurr/oracle-react'
+import { usePriceQueryOptions } from '@hypurr/vaults'
 import { useQueryClient } from '@tanstack/react-query'
 
 const queryClient = useQueryClient()
@@ -369,12 +368,12 @@ await queryClient.prefetchQuery(queryOptions)
 
 ### Types
 
-#### OracleConfig
+#### VaultConfig
 
-Global configuration for the Oracle system. Required for OracleProvider.
+Global configuration for the vault system. Required for VaultProvider.
 
 ```typescript
-interface OracleConfig {
+interface VaultConfig {
   /**
    * The chain ID where the oracle contracts are deployed.
    * Used to ensure queries target the correct network.
@@ -403,7 +402,7 @@ interface OracleConfig {
 
 **Example:**
 ```typescript
-const config: OracleConfig = {
+const config: VaultConfig = {
   chainId: 999,
   routerAddress: '0x28675f23E149c25f4f672FAD05f4e71DAfb75048',
   usdUnitOfAccount: '0x0000000000000000000000000000000000000348',
@@ -424,7 +423,7 @@ interface UsePriceParams {
   chainId?: number
   enabled?: boolean
   indexerPrice?: number | null
-  config?: OracleConfig
+  config?: VaultConfig
 }
 ```
 
@@ -454,7 +453,7 @@ interface UseVaultOraclePriceParams {
   chainId?: number
   enabled?: boolean
   indexerPrice?: number | null
-  config?: OracleConfig
+  config?: VaultConfig
 }
 ```
 
@@ -476,24 +475,24 @@ interface UseVaultOraclePriceResult {
 
 ### Utility Functions
 
-#### createOracleConfig
+#### createVaultConfig
 
-Factory function to create and validate an OracleConfig object.
+Factory function to create and validate an VaultConfig object.
 
 **Parameters:**
-- `config` (OracleConfig) - Configuration object with all required fields
+- `config` (VaultConfig) - Configuration object with all required fields
 
 **Returns:**
-- (OracleConfig) - Validated configuration object
+- (VaultConfig) - Validated configuration object
 
 **Throws:**
 - Error if any required field is missing or invalid
 
 **Example:**
 ```typescript
-import { createOracleConfig } from '@hypurr/oracle-react'
+import { createVaultConfig } from '@hypurr/vaults'
 
-const config = createOracleConfig({
+const config = createVaultConfig({
   chainId: 999,
   routerAddress: '0x28675f23E149c25f4f672FAD05f4e71DAfb75048',
   usdUnitOfAccount: '0x0000000000000000000000000000000000000348',
@@ -503,14 +502,14 @@ const config = createOracleConfig({
 
 ## Migration Guide
 
-### From Inline useEulerPrice to @hypurr/oracle-react
+### From Inline useEulerPrice to @hypurr/vaults
 
-If you're migrating from using inline `useEulerPrice` hooks in your app to the centralized `@hypurr/oracle-react` package:
+If you're migrating from using inline `useEulerPrice` hooks in your app to the centralized `@hypurr/vaults` package:
 
 #### Step 1: Install the Package
 
 ```bash
-pnpm add @hypurr/oracle-react
+pnpm add @hypurr/vaults
 ```
 
 #### Step 2: Update Imports
@@ -522,12 +521,12 @@ import { useEulerPrice } from '@/domain/euler/oracle/useEulerPrice'
 
 **After:**
 ```typescript
-import { usePrice, useVaultOraclePrice } from '@hypurr/oracle-react'
+import { usePrice, useVaultOraclePrice } from '@hypurr/vaults'
 ```
 
-#### Step 3: Set Up OracleProvider
+#### Step 3: Set Up VaultProvider
 
-Wrap your app with the OracleProvider at the root level:
+Wrap your app with the VaultProvider at the root level:
 
 **Before:**
 ```typescript
@@ -536,9 +535,9 @@ Wrap your app with the OracleProvider at the root level:
 
 **After:**
 ```typescript
-import { OracleProvider, createOracleConfig } from '@hypurr/oracle-react'
+import { VaultProvider, createVaultConfig } from '@hypurr/vaults'
 
-const oracleConfig = createOracleConfig({
+const vaultConfig = createVaultConfig({
   chainId: 999,
   routerAddress: '0x28675f23E149c25f4f672FAD05f4e71DAfb75048',
   usdUnitOfAccount: '0x0000000000000000000000000000000000000348',
@@ -549,9 +548,9 @@ export function App() {
   return (
     <WagmiProvider config={wagmiConfig}>
       <QueryClientProvider client={queryClient}>
-        <OracleProvider config={oracleConfig}>
+        <VaultProvider config={vaultConfig}>
           <YourApp />
-        </OracleProvider>
+        </VaultProvider>
       </QueryClientProvider>
     </WagmiProvider>
   )
@@ -572,13 +571,13 @@ const { priceUSD } = useEulerPrice({
 })
 ```
 
-**After (using OracleProvider context):**
+**After (using VaultProvider context):**
 ```typescript
 const { priceUSD } = usePrice({
   assetAddress: '0x...',
   vaultAddress: '0x...',
   indexerPrice: 1.0,
-  // Config is now provided by OracleProvider context
+  // Config is now provided by VaultProvider context
 })
 ```
 
@@ -632,14 +631,14 @@ export function TokenPrice({ assetAddress, vaultAddress, indexerPrice }) {
 
 **After:**
 ```typescript
-import { usePrice } from '@hypurr/oracle-react'
+import { usePrice } from '@hypurr/vaults'
 
 export function TokenPrice({ assetAddress, vaultAddress, indexerPrice }) {
   const { priceUSD, isLoading, isError, error } = usePrice({
     assetAddress,
     vaultAddress,
     indexerPrice,
-    // Config is now provided by OracleProvider context
+    // Config is now provided by VaultProvider context
   })
 
   if (isLoading) return <span>Loading...</span>
@@ -650,7 +649,7 @@ export function TokenPrice({ assetAddress, vaultAddress, indexerPrice }) {
 
 ## Best Practices
 
-1. **Wrap your app with OracleProvider** - Ensure all components that use Oracle hooks are wrapped with the provider
+1. **Wrap your app with VaultProvider** - Ensure all components that use vault hooks are wrapped with the provider
 2. **Use TanStack Query for caching** - Leverage built-in caching to reduce redundant queries
 3. **Handle loading and error states** - Always check `isLoading` and `error` before rendering data
 4. **Prefetch when possible** - Use `usePriceQueryOptions` to prefetch data before rendering

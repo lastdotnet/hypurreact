@@ -1,3 +1,3 @@
-export { OracleProvider, OracleContext } from './OracleProvider'
-export type { OracleProviderProps } from './OracleProvider'
-export { useOracleConfig } from './useOracleConfig'
+export { VaultProvider, VaultContext } from './VaultProvider'
+export type { VaultProviderProps } from './VaultProvider'
+export { useVaultConfig } from './useVaultConfig'
