@@ -3,7 +3,7 @@
 import { useReadContract } from 'wagmi'
 import type { Address } from 'viem'
 import { vaultLensAbi } from '../abis'
-import { useOracleConfig } from '../context'
+import { useVaultConfig } from '../context'
 import type {
   VaultInfo,
   LTVInfo,
@@ -255,7 +255,7 @@ export function useVaultLensData({
   vaultAddress,
   enabled = true,
 }: UseVaultLensDataParams): UseVaultLensDataResult {
-  const config = useOracleConfig()
+  const config = useVaultConfig()
   
   const hasVaultLens = !!config.vaultLensAddress
 
@@ -267,6 +267,8 @@ export function useVaultLensData({
     chainId: config.chainId,
     query: {
       enabled: enabled && hasVaultLens && !!vaultAddress,
+      retry: 3,
+      retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 10000),
     },
   })
 

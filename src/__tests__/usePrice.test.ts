@@ -1,7 +1,7 @@
 import { renderHook } from '@testing-library/react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { useReadContracts } from 'wagmi'
-import { useOracleConfig } from '../context/useOracleConfig'
+import { useVaultConfig } from '../context/useVaultConfig'
 import { useIndexerPrices } from '../hooks/useIndexerPrices'
 import { usePrice } from '../hooks/usePrice'
 import { useVaultOraclePrice } from '../hooks/useVaultOraclePrice'
@@ -12,8 +12,8 @@ vi.mock('wagmi', () => ({
   useReadContract: vi.fn(),
 }))
 
-vi.mock('../context/useOracleConfig', () => ({
-  useOracleConfig: vi.fn(),
+vi.mock('../context/useVaultConfig', () => ({
+  useVaultConfig: vi.fn(),
 }))
 
 vi.mock('../hooks/useVaultOraclePrice', () => ({
@@ -76,7 +76,7 @@ describe('usePrice', () => {
         error: null,
       })
 
-      vi.mocked(useOracleConfig).mockReturnValue(MOCK_CONFIG)
+      vi.mocked(useVaultConfig).mockReturnValue(MOCK_CONFIG)
       vi.mocked(useReadContracts).mockReturnValue({
         data: undefined,
         isLoading: false,
@@ -117,7 +117,7 @@ describe('usePrice', () => {
 
   describe('falls back to onchain when no indexer price', () => {
     it('should fetch onchain price when indexer price not provided', async () => {
-      vi.mocked(useOracleConfig).mockReturnValue(MOCK_CONFIG)
+      vi.mocked(useVaultConfig).mockReturnValue(MOCK_CONFIG)
       vi.mocked(useReadContracts).mockReturnValue({
         data: undefined,
         isLoading: false,
@@ -162,7 +162,7 @@ describe('usePrice', () => {
         { result: MOCK_UNIT_OF_ACCOUNT, status: 'success' },
       ]
 
-      vi.mocked(useOracleConfig).mockReturnValue(MOCK_CONFIG)
+      vi.mocked(useVaultConfig).mockReturnValue(MOCK_CONFIG)
       vi.mocked(useReadContracts).mockReturnValue({
         data: mockVaultConfigData,
         isLoading: false,
@@ -208,7 +208,7 @@ describe('usePrice', () => {
     })
 
     it('should not fetch vault config when oracle/unitOfAccount already provided', async () => {
-      vi.mocked(useOracleConfig).mockReturnValue(MOCK_CONFIG)
+      vi.mocked(useVaultConfig).mockReturnValue(MOCK_CONFIG)
       vi.mocked(useReadContracts).mockReturnValue({
         data: undefined,
         isLoading: false,
@@ -248,7 +248,7 @@ describe('usePrice', () => {
 
   describe('handles loading states correctly', () => {
     it('should indicate loading when vault config is being fetched', async () => {
-      vi.mocked(useOracleConfig).mockReturnValue(MOCK_CONFIG)
+      vi.mocked(useVaultConfig).mockReturnValue(MOCK_CONFIG)
       vi.mocked(useReadContracts).mockReturnValue({
         data: undefined,
         isLoading: true,
@@ -285,7 +285,7 @@ describe('usePrice', () => {
     })
 
     it('should indicate loading when vault oracle price is being fetched', async () => {
-      vi.mocked(useOracleConfig).mockReturnValue(MOCK_CONFIG)
+      vi.mocked(useVaultConfig).mockReturnValue(MOCK_CONFIG)
       vi.mocked(useReadContracts).mockReturnValue({
         data: undefined,
         isLoading: false,
@@ -327,7 +327,7 @@ describe('usePrice', () => {
     it('should propagate vault config fetch errors', async () => {
       const mockError = new Error('Vault config fetch failed')
 
-      vi.mocked(useOracleConfig).mockReturnValue(MOCK_CONFIG)
+      vi.mocked(useVaultConfig).mockReturnValue(MOCK_CONFIG)
       vi.mocked(useReadContracts).mockReturnValue({
         data: undefined,
         isLoading: false,
@@ -367,7 +367,7 @@ describe('usePrice', () => {
     it('should propagate vault oracle price fetch errors', async () => {
       const mockError = new Error('Oracle price fetch failed')
 
-      vi.mocked(useOracleConfig).mockReturnValue(MOCK_CONFIG)
+      vi.mocked(useVaultConfig).mockReturnValue(MOCK_CONFIG)
       vi.mocked(useReadContracts).mockReturnValue({
         data: undefined,
         isLoading: false,
@@ -410,7 +410,7 @@ describe('usePrice', () => {
       const vaultConfigError = new Error('Vault config error')
       const oraclePriceError = new Error('Oracle price error')
 
-      vi.mocked(useOracleConfig).mockReturnValue(MOCK_CONFIG)
+      vi.mocked(useVaultConfig).mockReturnValue(MOCK_CONFIG)
       vi.mocked(useReadContracts).mockReturnValue({
         data: undefined,
         isLoading: false,
@@ -450,7 +450,7 @@ describe('usePrice', () => {
 
   describe('uses config from context', () => {
     it('should use context config when no override provided', async () => {
-      vi.mocked(useOracleConfig).mockReturnValue(MOCK_CONFIG)
+      vi.mocked(useVaultConfig).mockReturnValue(MOCK_CONFIG)
       vi.mocked(useReadContracts).mockReturnValue({
         data: undefined,
         isLoading: false,
@@ -481,8 +481,8 @@ describe('usePrice', () => {
         }),
       )
 
-      // Verify useOracleConfig was called
-      expect(useOracleConfig).toHaveBeenCalled()
+      // Verify useVaultConfig was called
+      expect(useVaultConfig).toHaveBeenCalled()
 
       // Verify useVaultOraclePrice was called with context config
       expect(useVaultOraclePrice).toHaveBeenCalledWith(
@@ -501,7 +501,7 @@ describe('usePrice', () => {
         chainId: 137, // Polygon
       }
 
-      vi.mocked(useOracleConfig).mockReturnValue(contextConfig)
+      vi.mocked(useVaultConfig).mockReturnValue(contextConfig)
       vi.mocked(useReadContracts).mockReturnValue({
         data: undefined,
         isLoading: false,
@@ -544,7 +544,7 @@ describe('usePrice', () => {
 
   describe('maps source correctly', () => {
     it('should map "onchain" source to "vaultOracle"', async () => {
-      vi.mocked(useOracleConfig).mockReturnValue(MOCK_CONFIG)
+      vi.mocked(useVaultConfig).mockReturnValue(MOCK_CONFIG)
       vi.mocked(useReadContracts).mockReturnValue({
         data: undefined,
         isLoading: false,
@@ -593,7 +593,7 @@ describe('usePrice', () => {
         error: null,
       })
 
-      vi.mocked(useOracleConfig).mockReturnValue(MOCK_CONFIG)
+      vi.mocked(useVaultConfig).mockReturnValue(MOCK_CONFIG)
       vi.mocked(useReadContracts).mockReturnValue({
         data: undefined,
         isLoading: false,
@@ -630,7 +630,7 @@ describe('usePrice', () => {
     })
 
     it('should map "none" source to "none"', async () => {
-      vi.mocked(useOracleConfig).mockReturnValue(MOCK_CONFIG)
+      vi.mocked(useVaultConfig).mockReturnValue(MOCK_CONFIG)
       vi.mocked(useReadContracts).mockReturnValue({
         data: undefined,
         isLoading: false,
@@ -671,7 +671,7 @@ describe('usePrice', () => {
 
   describe('respects enabled flag', () => {
     it('should not fetch when enabled is false', async () => {
-      vi.mocked(useOracleConfig).mockReturnValue(MOCK_CONFIG)
+      vi.mocked(useVaultConfig).mockReturnValue(MOCK_CONFIG)
       vi.mocked(useReadContracts).mockReturnValue({
         data: undefined,
         isLoading: false,
@@ -716,7 +716,7 @@ describe('usePrice', () => {
       const contextConfig = { ...MOCK_CONFIG, chainId: 1 }
       const providedChainId = 137
 
-      vi.mocked(useOracleConfig).mockReturnValue(contextConfig)
+      vi.mocked(useVaultConfig).mockReturnValue(contextConfig)
       vi.mocked(useReadContracts).mockReturnValue({
         data: undefined,
         isLoading: false,
@@ -759,7 +759,7 @@ describe('usePrice', () => {
     it('should use context chainId when not provided', async () => {
       const contextConfig = { ...MOCK_CONFIG, chainId: 1 }
 
-      vi.mocked(useOracleConfig).mockReturnValue(contextConfig)
+      vi.mocked(useVaultConfig).mockReturnValue(contextConfig)
       vi.mocked(useReadContracts).mockReturnValue({
         data: undefined,
         isLoading: false,

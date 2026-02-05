@@ -2,11 +2,11 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { renderHook, waitFor } from '@testing-library/react'
 import * as React from 'react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { useOracleConfig } from '../context/useOracleConfig'
+import { useVaultConfig } from '../context/useVaultConfig'
 import { useIndexerPrices } from '../hooks/useIndexerPrices'
 
-vi.mock('../context/useOracleConfig', () => ({
-  useOracleConfig: vi.fn(),
+vi.mock('../context/useVaultConfig', () => ({
+  useVaultConfig: vi.fn(),
 }))
 
 const MOCK_INDEXER_URL = 'https://indexer-hyperevm-api-prod.up.railway.app'
@@ -71,7 +71,7 @@ beforeEach(() => {
 describe('useIndexerPrices', () => {
   describe('returns price map on successful fetch', () => {
     it('should return vault address to price mapping', async () => {
-      vi.mocked(useOracleConfig).mockReturnValue(MOCK_CONFIG_WITH_INDEXER)
+      vi.mocked(useVaultConfig).mockReturnValue(MOCK_CONFIG_WITH_INDEXER)
 
       global.fetch = vi.fn().mockResolvedValue({
         ok: true,
@@ -96,7 +96,7 @@ describe('useIndexerPrices', () => {
   describe('calls onIndexerError on network failure', () => {
     it('should invoke onIndexerError callback when fetch fails', async () => {
       const onIndexerError = vi.fn()
-      vi.mocked(useOracleConfig).mockReturnValue({
+      vi.mocked(useVaultConfig).mockReturnValue({
         ...MOCK_CONFIG_WITH_INDEXER,
         onIndexerError,
       })
@@ -118,7 +118,7 @@ describe('useIndexerPrices', () => {
 
   describe('returns empty object when indexerUrl not configured', () => {
     it('should return empty price map when no indexerUrl', async () => {
-      vi.mocked(useOracleConfig).mockReturnValue(MOCK_CONFIG_WITHOUT_INDEXER)
+      vi.mocked(useVaultConfig).mockReturnValue(MOCK_CONFIG_WITHOUT_INDEXER)
 
       const { result } = renderHook(() => useIndexerPrices(), {
         wrapper: createWrapper(),
@@ -136,7 +136,7 @@ describe('useIndexerPrices', () => {
   describe('respects indexerStaleTime configuration', () => {
     it('should use custom staleTime from config', async () => {
       const customStaleTime = 30000
-      vi.mocked(useOracleConfig).mockReturnValue({
+      vi.mocked(useVaultConfig).mockReturnValue({
         ...MOCK_CONFIG_WITH_INDEXER,
         indexerStaleTime: customStaleTime,
       })
@@ -161,7 +161,7 @@ describe('useIndexerPrices', () => {
   describe('handles HTTP errors', () => {
     it('should call onIndexerError when server returns error status', async () => {
       const onIndexerError = vi.fn()
-      vi.mocked(useOracleConfig).mockReturnValue({
+      vi.mocked(useVaultConfig).mockReturnValue({
         ...MOCK_CONFIG_WITH_INDEXER,
         onIndexerError,
       })
@@ -186,7 +186,7 @@ describe('useIndexerPrices', () => {
 
   describe('normalizes vault addresses', () => {
     it('should use checksummed addresses as keys', async () => {
-      vi.mocked(useOracleConfig).mockReturnValue(MOCK_CONFIG_WITH_INDEXER)
+      vi.mocked(useVaultConfig).mockReturnValue(MOCK_CONFIG_WITH_INDEXER)
 
       global.fetch = vi.fn().mockResolvedValue({
         ok: true,

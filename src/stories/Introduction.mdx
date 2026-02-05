@@ -2,28 +2,28 @@ import { Meta } from '@storybook/blocks'
 
 <Meta title="Introduction" />
 
-# @hypurr/oracle-react
+# @hypurr/vaults
 
-React hooks and components for seamless Oracle integration in your DeFi applications.
+React hooks for Euler vault data on HyperEVM.
 Built on top of [wagmi](https://wagmi.sh/) and [TanStack Query](https://tanstack.com/query/latest).
 
 ## Features
 
-- **React Hooks** - `usePrice`, `useVaultOraclePrice`, and `usePriceQueryOptions`
-- **Dual Data Sources** - Seamless fallback from indexer to on-chain data
+- **React Hooks** - `useVaultInfo`, `usePrice`, `useVaultOraclePrice`, and more
+- **Dual Data Sources** - Indexer-first with VaultLens on-chain fallback
+- **Category-Based Fetching** - Request only the vault data you need
 - **Query Optimization** - Built-in prefetching and caching with TanStack Query
 - **Type-Safe** - Full TypeScript support
 - **Wagmi Integration** - Works seamlessly with wagmi and viem
-- **Provider Pattern** - Simple `OracleProvider` setup
 
 ## Quick Start
 
-### 1. Create Oracle Configuration
+### 1. Create Vault Configuration
 
 ```tsx
-import { createOracleConfig } from '@hypurr/oracle-react'
+import { createVaultConfig } from '@hypurr/vaults'
 
-const oracleConfig = createOracleConfig({
+const vaultConfig = createVaultConfig({
   chainId: 999,
   routerAddress: '0x28675f23E149c25f4f672FAD05f4e71DAfb75048',
   usdUnitOfAccount: '0x0000000000000000000000000000000000000348',
@@ -31,18 +31,18 @@ const oracleConfig = createOracleConfig({
 })
 ```
 
-### 2. Wrap Your App with OracleProvider
+### 2. Wrap Your App with VaultProvider
 
 ```tsx
-import { OracleProvider } from '@hypurr/oracle-react'
+import { VaultProvider } from '@hypurr/vaults'
 
 export function App() {
   return (
     <WagmiProvider config={wagmiConfig}>
       <QueryClientProvider client={queryClient}>
-        <OracleProvider config={oracleConfig}>
+        <VaultProvider config={vaultConfig}>
           <YourApp />
-        </OracleProvider>
+        </VaultProvider>
       </QueryClientProvider>
     </WagmiProvider>
   )
@@ -52,7 +52,7 @@ export function App() {
 ### 3. Use the Hooks
 
 ```tsx
-import { usePrice } from '@hypurr/oracle-react'
+import { usePrice } from '@hypurr/vaults'
 
 function PriceDisplay() {
   const { priceUSD, isLoading, error, source } = usePrice({

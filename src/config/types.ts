@@ -1,11 +1,11 @@
 import type { Address } from 'viem'
 
 /**
- * Configuration for the Oracle system.
+ * Configuration for the vault system.
  *
  * @example
  * ```ts
- * const config: OracleConfig = {
+ * const config: VaultConfig = {
  *   chainId: 999,
  *   routerAddress: '0x28675f23E149c25f4f672FAD05f4e71DAfb75048',
  *   usdUnitOfAccount: '0x0000000000000000000000000000000000000348',
@@ -14,7 +14,7 @@ import type { Address } from 'viem'
  * }
  * ```
  */
-export interface OracleConfig {
+export interface VaultConfig {
   /**
    * The chain ID where the oracle contracts are deployed.
    * Used to ensure queries target the correct network.

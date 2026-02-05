@@ -1,7 +1,7 @@
 {
-  "name": "@hypurr/oracle-react",
+  "name": "@hypurr/vaults",
   "version": "0.1.0",
-  "description": "React hooks and components for Oracle integration",
+  "description": "React hooks for Euler vault data on HyperEVM",
   "type": "module",
   "main": "./dist/index.js",
   "module": "./dist/index.js",

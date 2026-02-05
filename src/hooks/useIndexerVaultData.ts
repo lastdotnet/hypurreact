@@ -2,8 +2,8 @@
 
 import { useQuery } from '@tanstack/react-query'
 import { type Address, getAddress } from 'viem'
-import { useOracleConfig } from '../context'
-import { oracleKeys } from '../utils/queryKeys'
+import { useVaultConfig } from '../context'
+import { vaultKeys } from '../utils/queryKeys'
 import type {
   VaultInfo,
   LTVInfo,
@@ -253,12 +253,12 @@ export function useIndexerVaultData({
   vaultAddress,
   enabled = true,
 }: UseIndexerVaultDataParams): UseIndexerVaultDataResult {
-  const config = useOracleConfig()
+  const config = useVaultConfig()
   
   const hasIndexerUrl = !!config.indexerUrl
 
   const query = useQuery({
-    queryKey: oracleKeys.vaultInfo({ chainId: config.chainId, vaultAddress }),
+    queryKey: vaultKeys.vaultInfo({ chainId: config.chainId, vaultAddress }),
     queryFn: () => {
       if (!config.indexerUrl) {
         return null

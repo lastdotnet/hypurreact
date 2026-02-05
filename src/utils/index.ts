@@ -1,1 +1,1 @@
-export { oracleKeys } from './queryKeys'
+export { vaultKeys } from './queryKeys'

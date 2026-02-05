@@ -323,9 +323,9 @@ This example shows:
 - **Source indication** - Shows whether price came from indexer or on-chain
 - **Multiple vaults** - Displays prices for USDC, WHYPE, UBTC, WETH, and PURR vaults
 
-The indexer URL is configured in the OracleProvider:
+The indexer URL is configured in the VaultProvider:
 \`\`\`ts
-const config = createOracleConfig({
+const config = createVaultConfig({
   chainId: 999,
   routerAddress: '0x28675f23E149c25f4f672FAD05f4e71DAfb75048',
   indexerUrl: 'https://indexer-hyperevm-api-prod.up.railway.app',

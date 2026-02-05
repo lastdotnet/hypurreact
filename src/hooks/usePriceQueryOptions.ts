@@ -1,13 +1,13 @@
 import { queryOptions } from '@tanstack/react-query'
 
-import { oracleKeys } from '../utils/queryKeys'
+import { vaultKeys } from '../utils/queryKeys'
 import type { UsePriceParams, UsePriceResult } from './usePrice'
 
 export function usePriceQueryOptions(params: UsePriceParams) {
   const { assetAddress, oracleAddress, chainId = 1, enabled = true } = params
 
   return queryOptions<UsePriceResult>({
-    queryKey: oracleKeys.price({
+    queryKey: vaultKeys.price({
       chainId,
       assetAddress,
       oracleAddress,

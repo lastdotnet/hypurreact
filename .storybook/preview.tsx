@@ -3,7 +3,7 @@ import * as React from 'react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { WagmiProvider, createConfig, http } from 'wagmi'
 import { mainnet } from 'wagmi/chains'
-import { OracleProvider, createOracleConfig } from '../src'
+import { VaultProvider, createVaultConfig } from '../src'
 
 // ============================================================================
 // Hypurr Design System - Color Constants (RGB from OKLCH)
@@ -189,12 +189,16 @@ const hyperEVM = {
 const wagmiConfig = createConfig({
   chains: [hyperEVM, mainnet],
   transports: {
-    [hyperEVM.id]: http(),
+    [hyperEVM.id]: http(hyperEVM.rpcUrls.default.http[0], {
+      retryCount: 3,
+      retryDelay: 1000,
+      timeout: 30_000,
+    }),
     [mainnet.id]: http(),
   },
 })
 
-const oracleConfig = createOracleConfig({
+const vaultConfig = createVaultConfig({
   chainId: 999,
   routerAddress: '0x28675f23E149c25f4f672FAD05f4e71DAfb75048',
   usdUnitOfAccount: '0x0000000000000000000000000000000000000348',
@@ -207,7 +211,13 @@ const oracleConfig = createOracleConfig({
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      retry: false,
+      retry: (failureCount, error) => {
+        // Retry network errors up to 3 times
+        if (error instanceof Error && error.message.includes('Failed to fetch')) {
+          return failureCount < 3
+        }
+        return false
+      },
       staleTime: 1000 * 60 * 5,
     },
   },
@@ -219,7 +229,7 @@ const queryClient = new QueryClient({
 const withProviders = (Story: React.ComponentType) => (
   <WagmiProvider config={wagmiConfig}>
     <QueryClientProvider client={queryClient}>
-      <OracleProvider config={oracleConfig}>
+      <VaultProvider config={vaultConfig}>
         <style>{globalStyles}</style>
         <div
           style={{
@@ -233,7 +243,7 @@ const withProviders = (Story: React.ComponentType) => (
         >
           <Story />
         </div>
-      </OracleProvider>
+      </VaultProvider>
     </QueryClientProvider>
   </WagmiProvider>
 )

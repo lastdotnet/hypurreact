@@ -2,9 +2,9 @@
 
 import { useQuery } from '@tanstack/react-query'
 import { type Address, getAddress } from 'viem'
-import type { OracleConfig } from '../config'
-import { useOracleConfig } from '../context'
-import { oracleKeys } from '../utils/queryKeys'
+import type { VaultConfig } from '../config'
+import { useVaultConfig } from '../context'
+import { vaultKeys } from '../utils/queryKeys'
 
 export interface IndexerVaultItem {
   vault: string
@@ -88,15 +88,15 @@ async function fetchIndexerPrices(
   }
 }
 
-export function useIndexerPrices(configOverride?: Partial<OracleConfig>): UseIndexerPricesResult {
-  const contextConfig = useOracleConfig()
+export function useIndexerPrices(configOverride?: Partial<VaultConfig>): UseIndexerPricesResult {
+  const contextConfig = useVaultConfig()
   const config = { ...contextConfig, ...configOverride }
 
   const { chainId, indexerUrl, indexerStaleTime, onIndexerError } = config
   const hasIndexerUrl = !!indexerUrl
 
   const query = useQuery({
-    queryKey: oracleKeys.indexerPrices({ chainId }),
+    queryKey: vaultKeys.indexerPrices({ chainId }),
     queryFn: () => {
       if (!indexerUrl) {
         return {} as IndexerPriceMap
