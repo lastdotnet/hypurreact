@@ -33,6 +33,35 @@ const config = createVaultConfig({
 
 ---
 
+## Oracle Address Resolution
+
+Understanding how oracle addresses are resolved is critical for correct integration.
+
+### How It Works
+
+```
+EVK Vault Contract
+├── oracle()         → Returns oracle router address
+├── unitOfAccount()  → Returns unit of account address  
+└── asset()          → Returns underlying asset address
+```
+
+When you call `usePrice({ vaultAddress })`:
+1. Hook calls `vault.oracle()` to get the oracle router
+2. Hook calls `vault.unitOfAccount()` to get UoA
+3. Hook calls `vault.asset()` to get the asset address
+4. These are passed to `useVaultOraclePrice` for on-chain price queries
+
+### Key Insight
+
+The oracle router address returned by `vault.oracle()` handles ALL price conversions:
+- Asset → Unit of Account (e.g., WETH → USD)
+- Unit of Account → USD Reference Token (when UoA ≠ USD)
+
+No separate router address is needed in config.
+
+---
+
 ## Package Overview
 
 ```
