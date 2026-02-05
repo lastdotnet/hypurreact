@@ -53,8 +53,18 @@ export function usePrice({
   }
 
   const hasIndexerPrice = indexerPrice !== null && indexerPrice > 0
+  const indexerResolved = !indexerPrices.isLoading
 
-  const shouldFetchVaultConfig = enabled && !!vaultAddress && (!oracleAddress || !unitOfAccount)
+  // Only fetch vault config (oracle/unitOfAccount) when:
+  // 1. Enabled and have vault address
+  // 2. Oracle or unitOfAccount not already provided
+  // 3. Indexer has resolved AND doesn't have the price (lazy fetch)
+  const shouldFetchVaultConfig =
+    enabled &&
+    !!vaultAddress &&
+    (!oracleAddress || !unitOfAccount) &&
+    indexerResolved &&
+    !hasIndexerPrice
 
   const {
     data: vaultConfigData,
@@ -78,7 +88,7 @@ export function usePrice({
     ],
     query: {
       enabled: shouldFetchVaultConfig,
-      staleTime: 60_000,
+      staleTime: Infinity, // Oracle/unitOfAccount don't change - cache indefinitely
     },
   })
 
