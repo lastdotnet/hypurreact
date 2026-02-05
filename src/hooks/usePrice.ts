@@ -55,14 +55,14 @@ export function usePrice({
   const hasIndexerPrice = indexerPrice !== null && indexerPrice > 0
   const indexerResolved = !indexerPrices.isLoading
 
-  // Only fetch vault config (oracle/unitOfAccount) when:
+  // Only fetch vault config (oracle/unitOfAccount/asset) when:
   // 1. Enabled and have vault address
-  // 2. Oracle or unitOfAccount not already provided
+  // 2. Oracle, unitOfAccount, or asset not already provided
   // 3. Indexer has resolved AND doesn't have the price (lazy fetch)
   const shouldFetchVaultConfig =
     enabled &&
     !!vaultAddress &&
-    (!oracleAddress || !unitOfAccount) &&
+    (!oracleAddress || !unitOfAccount || !assetAddress) &&
     indexerResolved &&
     !hasIndexerPrice
 

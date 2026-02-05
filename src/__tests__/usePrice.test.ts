@@ -907,6 +907,7 @@ describe('usePrice', () => {
         data: [
           { result: MOCK_ORACLE_ADDRESS, status: 'success' },
           { result: MOCK_UNIT_OF_ACCOUNT, status: 'success' },
+          { result: MOCK_ASSET_ADDRESS, status: 'success' },
         ],
         isLoading: false,
         isError: false,
