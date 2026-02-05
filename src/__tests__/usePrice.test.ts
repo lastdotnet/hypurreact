@@ -796,4 +796,151 @@ describe('usePrice', () => {
       )
     })
   })
+
+  describe('lazy loading - skips vault config fetch when indexer has price', () => {
+    it('should NOT fetch vault config when indexer has the price', async () => {
+      const indexerPrice = 1.0001
+
+      vi.mocked(useIndexerPrices).mockReturnValue({
+        data: { [MOCK_VAULT_ADDRESS]: indexerPrice },
+        isLoading: false,
+        isError: false,
+        isSuccess: true,
+        error: null,
+      })
+
+      vi.mocked(useVaultConfig).mockReturnValue(MOCK_CONFIG)
+      vi.mocked(useReadContracts).mockReturnValue({
+        data: undefined,
+        isLoading: false,
+        isError: false,
+        error: null,
+        status: 'success',
+        isPending: false,
+        isSuccess: true,
+        isFetched: true,
+        isFetching: false,
+        isRefetching: false,
+        isLoadingError: false,
+        isPaused: false,
+        failureCount: 0,
+        failureReason: null,
+        dataUpdatedAt: 0,
+        errorUpdatedAt: 0,
+        refetch: vi.fn(),
+      } as any)
+
+      vi.mocked(useVaultOraclePrice).mockReturnValue(MOCK_VAULT_ORACLE_RESULT)
+
+      const { result } = renderHook(() =>
+        usePrice({
+          vaultAddress: MOCK_VAULT_ADDRESS,
+        }),
+      )
+
+      // Should return indexer price
+      expect(result.current.priceUSD).toBe(indexerPrice)
+      expect(result.current.source).toBe('indexer')
+
+      // Vault config fetch should be disabled (enabled: false)
+      const callArgs = vi.mocked(useReadContracts).mock.calls[0]?.[0]
+      expect(callArgs?.query?.enabled).toBe(false)
+    })
+
+    it('should fetch vault config when indexer has no price for this vault', async () => {
+      vi.mocked(useIndexerPrices).mockReturnValue({
+        data: {},
+        isLoading: false,
+        isError: false,
+        isSuccess: true,
+        error: null,
+      })
+
+      vi.mocked(useVaultConfig).mockReturnValue(MOCK_CONFIG)
+      vi.mocked(useReadContracts).mockReturnValue({
+        data: [
+          { result: MOCK_ORACLE_ADDRESS, status: 'success' },
+          { result: MOCK_UNIT_OF_ACCOUNT, status: 'success' },
+        ],
+        isLoading: false,
+        isError: false,
+        error: null,
+        status: 'success',
+        isPending: false,
+        isSuccess: true,
+        isFetched: true,
+        isFetching: false,
+        isRefetching: false,
+        isLoadingError: false,
+        isPaused: false,
+        failureCount: 0,
+        failureReason: null,
+        dataUpdatedAt: 0,
+        errorUpdatedAt: 0,
+        refetch: vi.fn(),
+      } as any)
+
+      vi.mocked(useVaultOraclePrice).mockReturnValue(MOCK_VAULT_ORACLE_RESULT)
+
+      renderHook(() =>
+        usePrice({
+          vaultAddress: MOCK_VAULT_ADDRESS,
+        }),
+      )
+
+      // Vault config fetch should be enabled
+      const callArgs = vi.mocked(useReadContracts).mock.calls[0]?.[0]
+      expect(callArgs?.query?.enabled).toBe(true)
+    })
+
+    it('should wait for indexer to resolve before fetching vault config', async () => {
+      vi.mocked(useIndexerPrices).mockReturnValue({
+        data: undefined,
+        isLoading: true,
+        isError: false,
+        isSuccess: false,
+        error: null,
+      })
+
+      vi.mocked(useVaultConfig).mockReturnValue(MOCK_CONFIG)
+      vi.mocked(useReadContracts).mockReturnValue({
+        data: undefined,
+        isLoading: false,
+        isError: false,
+        error: null,
+        status: 'success',
+        isPending: false,
+        isSuccess: true,
+        isFetched: true,
+        isFetching: false,
+        isRefetching: false,
+        isLoadingError: false,
+        isPaused: false,
+        failureCount: 0,
+        failureReason: null,
+        dataUpdatedAt: 0,
+        errorUpdatedAt: 0,
+        refetch: vi.fn(),
+      } as any)
+
+      vi.mocked(useVaultOraclePrice).mockReturnValue({
+        ...MOCK_VAULT_ORACLE_RESULT,
+        priceUSD: 0,
+        source: 'none',
+      })
+
+      const { result } = renderHook(() =>
+        usePrice({
+          vaultAddress: MOCK_VAULT_ADDRESS,
+        }),
+      )
+
+      // Should be loading while indexer is loading
+      expect(result.current.isLoading).toBe(true)
+
+      // Vault config fetch should be disabled while indexer is loading
+      const callArgs = vi.mocked(useReadContracts).mock.calls[0]?.[0]
+      expect(callArgs?.query?.enabled).toBe(false)
+    })
+  })
 })
