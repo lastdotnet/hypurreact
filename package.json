@@ -56,5 +56,13 @@
     "react",
     "hooks"
   ],
-  "license": "MIT"
+  "license": "MIT",
+  "pnpm": {
+    "overrides": {
+      "esbuild": ">=0.25.0"
+    },
+    "onlyBuiltDependencies": [
+      "esbuild"
+    ]
+  }
 }
