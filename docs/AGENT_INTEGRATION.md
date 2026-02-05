@@ -47,10 +47,12 @@ EVK Vault Contract
 ```
 
 When you call `usePrice({ vaultAddress })`:
-1. Hook calls `vault.oracle()` to get the oracle router
-2. Hook calls `vault.unitOfAccount()` to get UoA
-3. Hook calls `vault.asset()` to get the asset address
-4. These are passed to `useVaultOraclePrice` for on-chain price queries
+1. If indexer has price → return immediately (no on-chain calls)
+2. Otherwise, hook fetches from vault in a single multicall:
+   - `vault.oracle()` → oracle router address
+   - `vault.unitOfAccount()` → unit of account
+   - `vault.asset()` → underlying asset address
+3. These are passed to `useVaultOraclePrice` for on-chain price query
 
 ### Key Insight
 

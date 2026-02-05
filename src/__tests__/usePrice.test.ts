@@ -153,11 +153,12 @@ describe('usePrice', () => {
     })
   })
 
-  describe('auto-fetches oracle/unitOfAccount from vault', () => {
-    it('should fetch oracle and unitOfAccount from vault when vaultAddress provided', async () => {
+  describe('auto-fetches oracle/unitOfAccount/asset from vault', () => {
+    it('should fetch oracle, unitOfAccount, and asset from vault when only vaultAddress provided', async () => {
       const mockVaultConfigData = [
         { result: MOCK_ORACLE_ADDRESS, status: 'success' },
         { result: MOCK_UNIT_OF_ACCOUNT, status: 'success' },
+        { result: MOCK_ASSET_ADDRESS, status: 'success' },
       ]
 
       vi.mocked(useVaultConfig).mockReturnValue(MOCK_CONFIG)
@@ -185,7 +186,6 @@ describe('usePrice', () => {
 
       const { result } = renderHook(() =>
         usePrice({
-          assetAddress: MOCK_ASSET_ADDRESS,
           vaultAddress: MOCK_VAULT_ADDRESS,
         }),
       )
@@ -193,7 +193,7 @@ describe('usePrice', () => {
       // Verify useReadContracts was called to fetch vault config
       expect(useReadContracts).toHaveBeenCalled()
 
-      // Verify useVaultOraclePrice was called with fetched oracle/unitOfAccount
+      // Verify useVaultOraclePrice was called with ALL fetched values including asset
       expect(useVaultOraclePrice).toHaveBeenCalledWith(
         expect.objectContaining({
           assetAddress: MOCK_ASSET_ADDRESS,
@@ -203,6 +203,52 @@ describe('usePrice', () => {
       )
 
       expect(result.current.priceUSD).toBe(MOCK_VAULT_ORACLE_RESULT.priceUSD)
+    })
+
+    it('should use provided assetAddress instead of fetching from vault', async () => {
+      const providedAssetAddress = '0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa' as const
+      const mockVaultConfigData = [
+        { result: MOCK_ORACLE_ADDRESS, status: 'success' },
+        { result: MOCK_UNIT_OF_ACCOUNT, status: 'success' },
+        { result: MOCK_ASSET_ADDRESS, status: 'success' },
+      ]
+
+      vi.mocked(useVaultConfig).mockReturnValue(MOCK_CONFIG)
+      vi.mocked(useReadContracts).mockReturnValue({
+        data: mockVaultConfigData,
+        isLoading: false,
+        isError: false,
+        error: null,
+        status: 'success',
+        isPending: false,
+        isSuccess: true,
+        isFetched: true,
+        isFetching: false,
+        isRefetching: false,
+        isLoadingError: false,
+        isPaused: false,
+        failureCount: 0,
+        failureReason: null,
+        dataUpdatedAt: 0,
+        errorUpdatedAt: 0,
+        refetch: vi.fn(),
+      } as any)
+
+      vi.mocked(useVaultOraclePrice).mockReturnValue(MOCK_VAULT_ORACLE_RESULT)
+
+      renderHook(() =>
+        usePrice({
+          assetAddress: providedAssetAddress,
+          vaultAddress: MOCK_VAULT_ADDRESS,
+        }),
+      )
+
+      // Should use provided assetAddress, not the one from vault
+      expect(useVaultOraclePrice).toHaveBeenCalledWith(
+        expect.objectContaining({
+          assetAddress: providedAssetAddress,
+        }),
+      )
     })
 
     it('should not fetch vault config when oracle/unitOfAccount already provided', async () => {

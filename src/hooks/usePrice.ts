@@ -85,20 +85,28 @@ export function usePrice({
         functionName: 'unitOfAccount',
         chainId: effectiveChainId,
       },
+      {
+        address: vaultAddress,
+        abi: eVaultImplementationAbi,
+        functionName: 'asset',
+        chainId: effectiveChainId,
+      },
     ],
     query: {
       enabled: shouldFetchVaultConfig,
-      staleTime: Infinity, // Oracle/unitOfAccount don't change - cache indefinitely
+      staleTime: Infinity, // Oracle/unitOfAccount/asset don't change - cache indefinitely
     },
   })
 
   const finalOracleAddress = oracleAddress || (vaultConfigData?.[0]?.result as Address | undefined)
   const finalUnitOfAccount = unitOfAccount || (vaultConfigData?.[1]?.result as Address | undefined)
+  const finalAssetAddress = assetAddress || (vaultConfigData?.[2]?.result as Address | undefined)
 
-  const shouldFetchOracle = enabled && !hasIndexerPrice && !!finalOracleAddress && !!finalUnitOfAccount
+  const shouldFetchOracle =
+    enabled && !hasIndexerPrice && !!finalOracleAddress && !!finalUnitOfAccount && !!finalAssetAddress
 
   const vaultOraclePrice = useVaultOraclePrice({
-    assetAddress,
+    assetAddress: finalAssetAddress,
     oracleAddress: finalOracleAddress,
     unitOfAccount: finalUnitOfAccount,
     chainId: effectiveChainId,
