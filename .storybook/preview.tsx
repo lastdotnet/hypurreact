@@ -200,7 +200,6 @@ const wagmiConfig = createConfig({
 
 const vaultConfig = createVaultConfig({
   chainId: 999,
-  routerAddress: '0x28675f23E149c25f4f672FAD05f4e71DAfb75048',
   usdUnitOfAccount: '0x0000000000000000000000000000000000000348',
   usdReferenceToken: '0xb8ce59fc3717ada4c02eadf9682a9e934f625ebb',
   indexerUrl: 'https://indexer-hyperevm-api-prod.up.railway.app',

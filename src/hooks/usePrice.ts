@@ -53,8 +53,18 @@ export function usePrice({
   }
 
   const hasIndexerPrice = indexerPrice !== null && indexerPrice > 0
+  const indexerResolved = !indexerPrices.isLoading
 
-  const shouldFetchVaultConfig = enabled && !!vaultAddress && (!oracleAddress || !unitOfAccount)
+  // Only fetch vault config (oracle/unitOfAccount/asset) when:
+  // 1. Enabled and have vault address
+  // 2. Oracle, unitOfAccount, or asset not already provided
+  // 3. Indexer has resolved AND doesn't have the price (lazy fetch)
+  const shouldFetchVaultConfig =
+    enabled &&
+    !!vaultAddress &&
+    (!oracleAddress || !unitOfAccount || !assetAddress) &&
+    indexerResolved &&
+    !hasIndexerPrice
 
   const {
     data: vaultConfigData,
@@ -75,20 +85,28 @@ export function usePrice({
         functionName: 'unitOfAccount',
         chainId: effectiveChainId,
       },
+      {
+        address: vaultAddress,
+        abi: eVaultImplementationAbi,
+        functionName: 'asset',
+        chainId: effectiveChainId,
+      },
     ],
     query: {
       enabled: shouldFetchVaultConfig,
-      staleTime: 60_000,
+      staleTime: Infinity, // Oracle/unitOfAccount/asset don't change - cache indefinitely
     },
   })
 
   const finalOracleAddress = oracleAddress || (vaultConfigData?.[0]?.result as Address | undefined)
   const finalUnitOfAccount = unitOfAccount || (vaultConfigData?.[1]?.result as Address | undefined)
+  const finalAssetAddress = assetAddress || (vaultConfigData?.[2]?.result as Address | undefined)
 
-  const shouldFetchOracle = enabled && !hasIndexerPrice && !!finalOracleAddress && !!finalUnitOfAccount
+  const shouldFetchOracle =
+    enabled && !hasIndexerPrice && !!finalOracleAddress && !!finalUnitOfAccount && !!finalAssetAddress
 
   const vaultOraclePrice = useVaultOraclePrice({
-    assetAddress,
+    assetAddress: finalAssetAddress,
     oracleAddress: finalOracleAddress,
     unitOfAccount: finalUnitOfAccount,
     chainId: effectiveChainId,

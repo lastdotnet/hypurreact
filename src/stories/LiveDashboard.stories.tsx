@@ -327,7 +327,6 @@ The indexer URL is configured in the VaultProvider:
 \`\`\`ts
 const config = createVaultConfig({
   chainId: 999,
-  routerAddress: '0x28675f23E149c25f4f672FAD05f4e71DAfb75048',
   indexerUrl: 'https://indexer-hyperevm-api-prod.up.railway.app',
   // ...
 })

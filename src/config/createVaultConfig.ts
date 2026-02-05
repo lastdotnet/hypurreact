@@ -5,10 +5,6 @@ export function createVaultConfig(config: VaultConfig): VaultConfig {
     throw new Error('createVaultConfig: chainId is required and must be a number')
   }
 
-  if (!config.routerAddress) {
-    throw new Error('createVaultConfig: routerAddress is required')
-  }
-
   if (!config.usdUnitOfAccount) {
     throw new Error('createVaultConfig: usdUnitOfAccount is required')
   }
@@ -35,7 +31,6 @@ export function createVaultConfig(config: VaultConfig): VaultConfig {
 
   return {
     chainId: config.chainId,
-    routerAddress: config.routerAddress,
     usdUnitOfAccount: config.usdUnitOfAccount,
     usdReferenceToken: config.usdReferenceToken,
     indexerUrl: config.indexerUrl,

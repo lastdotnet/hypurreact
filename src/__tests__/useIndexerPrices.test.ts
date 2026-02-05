@@ -14,7 +14,6 @@ const MOCK_CHAIN_ID = 999
 
 const MOCK_CONFIG_WITH_INDEXER = {
   chainId: MOCK_CHAIN_ID,
-  routerAddress: '0x28675f23E149c25f4f672FAD05f4e71DAfb75048' as const,
   usdUnitOfAccount: '0x0000000000000000000000000000000000000348' as const,
   usdReferenceToken: '0xb8ce59fc3717ada4c02eadf9682a9e934f625ebb' as const,
   indexerUrl: MOCK_INDEXER_URL,
@@ -23,7 +22,6 @@ const MOCK_CONFIG_WITH_INDEXER = {
 
 const MOCK_CONFIG_WITHOUT_INDEXER = {
   chainId: MOCK_CHAIN_ID,
-  routerAddress: '0x28675f23E149c25f4f672FAD05f4e71DAfb75048' as const,
   usdUnitOfAccount: '0x0000000000000000000000000000000000000348' as const,
   usdReferenceToken: '0xb8ce59fc3717ada4c02eadf9682a9e934f625ebb' as const,
 }

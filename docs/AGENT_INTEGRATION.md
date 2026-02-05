@@ -2,6 +2,68 @@
 
 Technical reference for integrating Euler vault hooks into React applications.
 
+---
+
+## Breaking Changes (v0.2.0)
+
+### `routerAddress` Removed from Config
+
+The `routerAddress` field has been removed from `VaultConfig`. Oracle router addresses are now fetched dynamically from each vault via `vault.oracle()`.
+
+**Migration:**
+
+```diff
+const config = createVaultConfig({
+  chainId: 999,
+- routerAddress: '0x28675f23E149c25f4f672FAD05f4e71DAfb75048',
+  usdUnitOfAccount: '0x0000000000000000000000000000000000000348',
+  usdReferenceToken: '0xb8ce59fc3717ada4c02eadf9682a9e934f625ebb',
+})
+```
+
+**Why:** Each vault stores its own oracle router address. Fetching it dynamically:
+- Eliminates hardcoded addresses from config
+- Ensures correct oracle is used per-vault
+- Simplifies setup (one less address to configure)
+
+**Impact:** 
+- TypeScript error if `routerAddress` is still passed
+- No runtime behavior change for `usePrice` (it already fetched oracle from vault)
+- `useVaultOraclePrice` now uses `oracleAddress` param for both asset pricing AND UoA→USD conversion
+
+---
+
+## Oracle Address Resolution
+
+Understanding how oracle addresses are resolved is critical for correct integration.
+
+### How It Works
+
+```
+EVK Vault Contract
+├── oracle()         → Returns oracle router address
+├── unitOfAccount()  → Returns unit of account address  
+└── asset()          → Returns underlying asset address
+```
+
+When you call `usePrice({ vaultAddress })`:
+1. If indexer has price → return immediately (no on-chain calls)
+2. Otherwise, hook fetches from vault in a single multicall:
+   - `vault.oracle()` → oracle router address
+   - `vault.unitOfAccount()` → unit of account
+   - `vault.asset()` → underlying asset address
+3. These are passed to `useVaultOraclePrice` for on-chain price query
+
+### Key Insight
+
+The oracle router address returned by `vault.oracle()` handles ALL price conversions:
+- Asset → Unit of Account (e.g., WETH → USD)
+- Unit of Account → USD Reference Token (when UoA ≠ USD)
+
+No separate router address is needed in config.
+
+---
+
 ## Package Overview
 
 ```
@@ -47,11 +109,12 @@ import { createVaultConfig } from '@hypurr/vaults'
 
 const config = createVaultConfig({
   chainId: 999,                                              // HyperEVM
-  routerAddress: '0x28675f23E149c25f4f672FAD05f4e71DAfb75048', // Euler Oracle Router
   usdUnitOfAccount: '0x0000000000000000000000000000000000000348', // USD virtual address
   usdReferenceToken: '0xb8ce59fc3717ada4c02eadf9682a9e934f625ebb', // USDC
 })
 ```
+
+> **Note:** Oracle router addresses are fetched dynamically from each vault via `vault.oracle()`. No hardcoded router address is required in the config.
 
 ---
 
@@ -210,13 +273,17 @@ const { priceUSD } = usePrice({
 ### Purpose
 Low-level on-chain price fetch via vault oracle. Used internally by `usePrice`.
 
+The oracle address (fetched from `vault.oracle()`) is used for:
+1. Getting asset price in the vault's unit of account
+2. Converting unit of account to USD (when UoA is not USD)
+
 ### Signature
 
 ```typescript
 function useVaultOraclePrice({
   assetAddress?: Address,
-  oracleAddress: Address,
-  unitOfAccount: Address,
+  oracleAddress: Address,      // Vault's oracle (from vault.oracle())
+  unitOfAccount: Address,      // Vault's UoA (from vault.unitOfAccount())
   chainId?: number,
   enabled?: boolean,
   config?: VaultConfig,
@@ -240,11 +307,14 @@ function useVaultOraclePrice({
 ```typescript
 interface VaultConfig {
   chainId: number
-  routerAddress: Address
-  usdUnitOfAccount: Address
-  usdReferenceToken: Address
+  usdUnitOfAccount: Address   // Virtual USD address (e.g., 0x348 = 840 decimal = USD ISO code)
+  usdReferenceToken: Address  // Stablecoin for USD conversion (e.g., USDC)
+  indexerUrl?: string         // Optional indexer API URL
+  vaultLensAddress?: Address  // Optional VaultLens contract address
 }
 ```
+
+> Oracle router addresses are fetched per-vault via `vault.oracle()` - no global router config needed.
 
 ### VaultInfoSource
 

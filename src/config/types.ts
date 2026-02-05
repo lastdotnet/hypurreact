@@ -7,7 +7,6 @@ import type { Address } from 'viem'
  * ```ts
  * const config: VaultConfig = {
  *   chainId: 999,
- *   routerAddress: '0x28675f23E149c25f4f672FAD05f4e71DAfb75048',
  *   usdUnitOfAccount: '0x0000000000000000000000000000000000000348',
  *   usdReferenceToken: '0xb8ce59fc3717ada4c02eadf9682a9e934f625ebb',
  *   indexerUrl: 'https://indexer-hyperevm-api-prod.up.railway.app',
@@ -20,12 +19,6 @@ export interface VaultConfig {
    * Used to ensure queries target the correct network.
    */
   chainId: number
-
-  /**
-   * Address of the Euler Oracle Router contract.
-   * This is the main entry point for price queries.
-   */
-  routerAddress: Address
 
   /**
    * Unit of account for USD-denominated prices.

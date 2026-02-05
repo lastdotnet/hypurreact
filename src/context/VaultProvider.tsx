@@ -38,7 +38,6 @@ export interface VaultProviderProps {
  *
  * const vaultConfig = {
  *   chainId: 1,
- *   routerAddress: '0x28675f23E149c25f4f672FAD05f4e71DAfb75048',
  *   usdUnitOfAccount: '0x0000000000000000000000000000000000000348',
  *   usdReferenceToken: '0xb8ce59fc3717ada4c02eadf9682a9e934f625ebb',
  * }
@@ -63,7 +62,7 @@ export function VaultProvider({ config, children }: VaultProviderProps): React.R
   if (!config) {
     throw new Error(
       '[@hypurr/vaults] VaultProvider requires a config prop. ' +
-        'Please provide a VaultConfig object with chainId, routerAddress, usdUnitOfAccount, and usdReferenceToken.',
+        'Please provide a VaultConfig object with chainId, usdUnitOfAccount, and usdReferenceToken.',
     )
   }
 
