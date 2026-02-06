@@ -5,6 +5,7 @@ import { type Address, getAddress } from 'viem'
 import type { VaultConfig } from '../config'
 import { useVaultConfig } from '../context'
 import { vaultKeys } from '../utils/queryKeys'
+import { isPriceStale } from '../utils/priceUtils'
 
 export interface IndexerVaultItem {
   vault: string
@@ -36,22 +37,6 @@ export interface UseIndexerPricesResult {
 }
 
 const DEFAULT_STALE_TIME = 60_000
-const PRICE_STALENESS_THRESHOLD = 15 * 60 * 1000 // 15 minutes in milliseconds
-
-function isPriceStale(timestamp: string | undefined): boolean {
-  if (!timestamp) return true
-
-  try {
-    const priceTime = new Date(timestamp).getTime()
-    if (isNaN(priceTime)) return true // Invalid timestamp
-
-    const now = Date.now()
-    const age = now - priceTime
-    return age > PRICE_STALENESS_THRESHOLD
-  } catch {
-    return true
-  }
-}
 
 async function fetchIndexerPrices(
   indexerUrl: string,
