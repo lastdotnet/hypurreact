@@ -143,7 +143,7 @@ function useVaultInfo<T extends readonly VaultCategory[]>({
 
 | Category | Fields | Source |
 |----------|--------|--------|
-| `price` | assetPrice, assetPriceTimestamp | Indexer (fallback: VaultLens) |
+| `price` | assetPrice, assetPriceTimestamp | Indexer (fallback: VaultLens)\* |
 | `identity` | vault, vaultName, vaultSymbol, vaultDecimals, asset, assetName, assetSymbol, assetDecimals | Indexer (fallback: VaultLens) |
 | `financials` | totalAssets, totalAssetsUSD, totalBorrows, totalBorrowsUSD, cash, cashUSD, totalShares, utilization | Indexer (fallback: VaultLens) |
 | `apy` | supplyAPY, borrowAPY, totalAPY, rewardAPY, baseAPY | Indexer (fallback: VaultLens) |
@@ -156,15 +156,21 @@ function useVaultInfo<T extends readonly VaultCategory[]>({
 | `hooks` | hookTarget, hookedOperations, configFlags | VaultLens only |
 | `oracle` | oracle, unitOfAccount, unitOfAccountName, unitOfAccountSymbol, unitOfAccountDecimals | VaultLens only |
 
+\* **Price Staleness Check**: Prices older than 15 minutes are treated as unavailable, automatically triggering VaultLens fallback.
+
 ### Source Selection Logic
 
 ```
 1. Requested categories → determine needed sources
 2. Indexer-available categories → query indexer FIRST
+   2a. Check assetPriceTimestamp for staleness (>15 minutes)
+   2b. Treat stale prices as null (triggers fallback)
 3. VaultLens-only categories → query VaultLens
-4. If indexer fails for overlap categories → fallback to VaultLens
+4. If indexer fails or returns stale data for overlap categories → fallback to VaultLens
 5. Merge results, return with source metadata
 ```
+
+**Staleness Protection**: Prices older than 15 minutes are automatically treated as unavailable, triggering on-chain fallback to ensure data freshness.
 
 ### Usage Patterns
 
@@ -264,6 +270,90 @@ const { priceUSD } = usePrice({
   oracleAddress: '0x...',
   unitOfAccount: '0x...',
 })
+```
+
+### Price Staleness Protection
+
+Both `usePrice` and `useVaultInfo` implement **automatic staleness detection** to protect against outdated indexer data.
+
+**How It Works:**
+
+When the indexer returns prices, the hooks check the `assetPriceTimestamp`:
+
+```typescript
+// Prices are considered stale if:
+1. Timestamp is older than 15 minutes
+2. Timestamp is missing (undefined)
+3. Timestamp is invalid (unparseable date)
+```
+
+**Behavior:**
+
+```
+Fresh Price (<15min old)     → Use indexer price, source: "indexer"
+Stale Price (>15min old)     → Set to null, trigger on-chain fallback
+Missing/Invalid Timestamp    → Set to null, trigger on-chain fallback
+```
+
+**Implementation:**
+
+```typescript
+const PRICE_STALENESS_THRESHOLD = 15 * 60 * 1000 // 15 minutes
+
+function isPriceStale(timestamp: string | undefined): boolean {
+  if (!timestamp) return true
+
+  try {
+    const priceTime = new Date(timestamp).getTime()
+    if (isNaN(priceTime)) return true
+
+    const age = Date.now() - priceTime
+    return age > PRICE_STALENESS_THRESHOLD
+  } catch {
+    return true
+  }
+}
+
+// Applied automatically in useIndexerPrices and useIndexerVaultData
+priceMap[vaultAddress] = isPriceStale(timestamp) ? null : price
+```
+
+**Why 15 Minutes?**
+
+The threshold balances two concerns:
+- **Freshness**: Crypto prices can change significantly in 15 minutes
+- **Reliability**: Tolerates normal indexer delays without excessive on-chain calls
+- **Safety**: Prevents displaying dangerously outdated prices in volatile markets
+
+**User Experience:**
+
+The staleness check is **transparent** to consumers:
+- `usePrice` automatically falls back to on-chain oracle
+- `useVaultInfo` falls back to VaultLens for price category
+- `source` field indicates actual data source used
+- No additional configuration or handling required
+
+**Example:**
+
+```typescript
+// Indexer returns price from 20 minutes ago
+const { priceUSD, source } = usePrice({ vaultAddress: '0x...' })
+
+// Hook automatically:
+// 1. Detects stale timestamp (20min > 15min threshold)
+// 2. Treats indexer price as null
+// 3. Fetches oracle/unitOfAccount from vault
+// 4. Queries on-chain oracle for fresh price
+// 5. Returns: priceUSD from oracle, source: "vaultOracle"
+```
+
+**Testing Staleness:**
+
+See Storybook story "Stale Price Fallback (>15min)" for interactive demonstration:
+
+```bash
+pnpm storybook
+# Navigate to: usePrice → Stale Price Fallback (>15min)
 ```
 
 ---
