@@ -10,6 +10,7 @@ export interface IndexerVaultItem {
   vault: string
   asset?: string
   assetPrice: number | null
+  assetPriceTimestamp?: string
   assetSymbol?: string
   oracle?: string
   unitOfAccount?: string
@@ -35,6 +36,22 @@ export interface UseIndexerPricesResult {
 }
 
 const DEFAULT_STALE_TIME = 60_000
+const PRICE_STALENESS_THRESHOLD = 15 * 60 * 1000 // 15 minutes in milliseconds
+
+function isPriceStale(timestamp: string | undefined): boolean {
+  if (!timestamp) return true
+
+  try {
+    const priceTime = new Date(timestamp).getTime()
+    if (isNaN(priceTime)) return true // Invalid timestamp
+
+    const now = Date.now()
+    const age = now - priceTime
+    return age > PRICE_STALENESS_THRESHOLD
+  } catch {
+    return true
+  }
+}
 
 async function fetchIndexerPrices(
   indexerUrl: string,
@@ -75,7 +92,9 @@ async function fetchIndexerPrices(
     for (const item of data.items) {
       try {
         const normalizedAddress = getAddress(item.vault) as Address
-        priceMap[normalizedAddress] = item.assetPrice
+        // Treat stale prices (>15 minutes old) as null to trigger on-chain fallback
+        const isStale = isPriceStale(item.assetPriceTimestamp)
+        priceMap[normalizedAddress] = isStale ? null : item.assetPrice
       } catch {
         continue
       }

@@ -95,6 +95,23 @@ interface IndexerResponse {
   }
 }
 
+const PRICE_STALENESS_THRESHOLD = 15 * 60 * 1000 // 15 minutes in milliseconds
+
+function isPriceStale(timestamp: string | undefined): boolean {
+  if (!timestamp) return true
+
+  try {
+    const priceTime = new Date(timestamp).getTime()
+    if (isNaN(priceTime)) return true // Invalid timestamp
+
+    const now = Date.now()
+    const age = now - priceTime
+    return age > PRICE_STALENESS_THRESHOLD
+  } catch {
+    return true
+  }
+}
+
 function transformIndexerData(item: IndexerVaultItem): Partial<VaultInfo> {
   const collateralLTVs: LTVInfo[] = (item.exposure ?? []).map(exp => ({
     collateral: getAddress(exp.collateral) as Address,
@@ -134,6 +151,9 @@ function transformIndexerData(item: IndexerVaultItem): Partial<VaultInfo> {
     social: e.social,
   })) ?? null
 
+  // Treat stale prices (>15 minutes old) as null to trigger on-chain fallback
+  const isStale = isPriceStale(item.assetPriceTimestamp)
+
   return {
     vault: getAddress(item.vault) as Address,
     vaultName: item.vaultName ?? '',
@@ -143,8 +163,8 @@ function transformIndexerData(item: IndexerVaultItem): Partial<VaultInfo> {
     assetName: '',
     assetSymbol: item.assetSymbol ?? '',
     assetDecimals: item.assetDecimals ?? 18,
-    
-    assetPrice: item.assetPrice,
+
+    assetPrice: isStale ? null : item.assetPrice,
     assetPriceTimestamp: item.assetPriceTimestamp ?? null,
     
     totalAssets: item.totalAssets ? BigInt(item.totalAssets) : 0n,

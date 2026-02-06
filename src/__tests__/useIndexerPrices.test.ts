@@ -32,18 +32,21 @@ const MOCK_INDEXER_RESPONSE = {
       vault: '0xC200AaB602Cd7046389B5C8FB088884323F8dD0f',
       asset: '0xb8ce59fc3717ada4c02eadf9682a9e934f625ebb',
       assetPrice: 1.0001,
+      assetPriceTimestamp: new Date(Date.now() - 5 * 60 * 1000).toISOString(), // 5 minutes ago
       assetSymbol: 'USDC',
     },
     {
       vault: '0xF73c654d468f5485bF15F3470B78851a49257704',
       asset: '0x0000000000000000000000000000000000000001',
       assetPrice: 25.5,
+      assetPriceTimestamp: new Date(Date.now() - 5 * 60 * 1000).toISOString(), // 5 minutes ago
       assetSymbol: 'WHYPE',
     },
     {
       vault: '0x8A4545827DF5446Ba120B904e5306e58acCA4E89',
       asset: '0x0000000000000000000000000000000000000002',
       assetPrice: null,
+      assetPriceTimestamp: new Date(Date.now() - 5 * 60 * 1000).toISOString(), // 5 minutes ago
       assetSymbol: 'UBTC',
     },
   ],
@@ -194,6 +197,7 @@ describe('useIndexerPrices', () => {
               {
                 vault: '0xc200aab602cd7046389b5c8fb088884323f8dd0f',
                 assetPrice: 1.0,
+                assetPriceTimestamp: new Date(Date.now() - 5 * 60 * 1000).toISOString(), // 5 minutes ago
               },
             ],
             pagination: { page: 1, limit: 100, total: 1 },
@@ -209,6 +213,117 @@ describe('useIndexerPrices', () => {
       })
 
       expect(result.current.data?.['0xC200AaB602Cd7046389B5C8FB088884323F8dD0f']).toBe(1.0)
+    })
+  })
+
+  describe('treats stale prices as null', () => {
+    it('should return null for prices older than 15 minutes', async () => {
+      vi.mocked(useVaultConfig).mockReturnValue(MOCK_CONFIG_WITH_INDEXER)
+
+      const now = new Date()
+      const staleTimestamp = new Date(now.getTime() - 16 * 60 * 1000) // 16 minutes ago
+      const freshTimestamp = new Date(now.getTime() - 5 * 60 * 1000) // 5 minutes ago
+
+      global.fetch = vi.fn().mockResolvedValue({
+        ok: true,
+        json: () =>
+          Promise.resolve({
+            items: [
+              {
+                vault: '0xC200AaB602Cd7046389B5C8FB088884323F8dD0f',
+                asset: '0xb8ce59fc3717ada4c02eadf9682a9e934f625ebb',
+                assetPrice: 1.0001,
+                assetPriceTimestamp: staleTimestamp.toISOString(),
+                assetSymbol: 'USDC',
+              },
+              {
+                vault: '0xF73c654d468f5485bF15F3470B78851a49257704',
+                asset: '0x0000000000000000000000000000000000000001',
+                assetPrice: 25.5,
+                assetPriceTimestamp: freshTimestamp.toISOString(),
+                assetSymbol: 'WHYPE',
+              },
+            ],
+            pagination: { page: 1, limit: 100, total: 2 },
+          }),
+      })
+
+      const { result } = renderHook(() => useIndexerPrices(), {
+        wrapper: createWrapper(),
+      })
+
+      await waitFor(() => {
+        expect(result.current.isSuccess).toBe(true)
+      })
+
+      // Stale price should be null
+      expect(result.current.data?.['0xC200AaB602Cd7046389B5C8FB088884323F8dD0f']).toBeNull()
+      // Fresh price should be preserved
+      expect(result.current.data?.['0xF73c654d468f5485bF15F3470B78851a49257704']).toBe(25.5)
+    })
+
+    it('should treat prices with missing timestamps as stale', async () => {
+      vi.mocked(useVaultConfig).mockReturnValue(MOCK_CONFIG_WITH_INDEXER)
+
+      global.fetch = vi.fn().mockResolvedValue({
+        ok: true,
+        json: () =>
+          Promise.resolve({
+            items: [
+              {
+                vault: '0xC200AaB602Cd7046389B5C8FB088884323F8dD0f',
+                asset: '0xb8ce59fc3717ada4c02eadf9682a9e934f625ebb',
+                assetPrice: 1.0001,
+                // No assetPriceTimestamp
+                assetSymbol: 'USDC',
+              },
+            ],
+            pagination: { page: 1, limit: 100, total: 1 },
+          }),
+      })
+
+      const { result } = renderHook(() => useIndexerPrices(), {
+        wrapper: createWrapper(),
+      })
+
+      await waitFor(() => {
+        expect(result.current.isSuccess).toBe(true)
+      })
+
+      // Price with no timestamp should be treated as stale (null)
+      expect(result.current.data?.['0xC200AaB602Cd7046389B5C8FB088884323F8dD0f']).toBeNull()
+    })
+
+    it('should treat prices with invalid timestamps as stale', async () => {
+      vi.mocked(useVaultConfig).mockReturnValue(MOCK_CONFIG_WITH_INDEXER)
+
+      global.fetch = vi.fn().mockResolvedValue({
+        ok: true,
+        json: () =>
+          Promise.resolve({
+            items: [
+              {
+                vault: '0xC200AaB602Cd7046389B5C8FB088884323F8dD0f',
+                asset: '0xb8ce59fc3717ada4c02eadf9682a9e934f625ebb',
+                assetPrice: 1.0001,
+                assetPriceTimestamp: 'invalid-date',
+                assetSymbol: 'USDC',
+              },
+            ],
+            pagination: { page: 1, limit: 100, total: 1 },
+          }),
+      })
+
+      const { result } = renderHook(() => useIndexerPrices(), {
+        wrapper: createWrapper(),
+      })
+
+      await waitFor(() => {
+        expect(result.current.isSuccess).toBe(true)
+      })
+
+      // Price with invalid timestamp should be treated as stale (null)
+      expect(result.current.data?.['0xC200AaB602Cd7046389B5C8FB088884323F8dD0f']).toBeNull()
     })
   })
 })
