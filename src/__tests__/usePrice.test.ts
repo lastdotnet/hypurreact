@@ -990,4 +990,58 @@ describe('usePrice', () => {
       expect(callArgs?.query?.enabled).toBe(false)
     })
   })
+
+  describe('falls back to onchain when indexer price is stale', () => {
+    it('should use onchain price when indexer returns null (stale) price', async () => {
+      // Mock indexer returning null (stale) price for the vault
+      vi.mocked(useIndexerPrices).mockReturnValue({
+        data: { [MOCK_VAULT_ADDRESS]: null },
+        isLoading: false,
+        isError: false,
+        isSuccess: true,
+        error: null,
+      })
+
+      const mockVaultConfigData = [
+        { result: MOCK_ORACLE_ADDRESS, status: 'success' },
+        { result: MOCK_UNIT_OF_ACCOUNT, status: 'success' },
+        { result: MOCK_ASSET_ADDRESS, status: 'success' },
+      ]
+
+      vi.mocked(useVaultConfig).mockReturnValue(MOCK_CONFIG)
+      vi.mocked(useReadContracts).mockReturnValue({
+        data: mockVaultConfigData,
+        isLoading: false,
+        isError: false,
+        error: null,
+        status: 'success',
+        isPending: false,
+        isSuccess: true,
+        isFetched: true,
+        isFetching: false,
+        isRefetching: false,
+        isLoadingError: false,
+        isPaused: false,
+        failureCount: 0,
+        failureReason: null,
+        dataUpdatedAt: 0,
+        errorUpdatedAt: 0,
+        refetch: vi.fn(),
+      } as any)
+
+      vi.mocked(useVaultOraclePrice).mockReturnValue(MOCK_VAULT_ORACLE_RESULT)
+
+      const { result } = renderHook(() =>
+        usePrice({
+          vaultAddress: MOCK_VAULT_ADDRESS,
+        }),
+      )
+
+      // Should fall back to on-chain oracle
+      expect(result.current.priceUSD).toBe(MOCK_VAULT_ORACLE_RESULT.priceUSD)
+      expect(result.current.source).toBe('vaultOracle')
+      expect(result.current.isLoading).toBe(false)
+      expect(result.current.isError).toBe(false)
+    })
+  })
 })

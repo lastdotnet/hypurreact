@@ -5,11 +5,13 @@ import { type Address, getAddress } from 'viem'
 import type { VaultConfig } from '../config'
 import { useVaultConfig } from '../context'
 import { vaultKeys } from '../utils/queryKeys'
+import { isPriceStale } from '../utils/priceUtils'
 
 export interface IndexerVaultItem {
   vault: string
   asset?: string
   assetPrice: number | null
+  assetPriceTimestamp?: string
   assetSymbol?: string
   oracle?: string
   unitOfAccount?: string
@@ -75,7 +77,9 @@ async function fetchIndexerPrices(
     for (const item of data.items) {
       try {
         const normalizedAddress = getAddress(item.vault) as Address
-        priceMap[normalizedAddress] = item.assetPrice
+        // Treat stale prices (>15 minutes old) as null to trigger on-chain fallback
+        const isStale = isPriceStale(item.assetPriceTimestamp)
+        priceMap[normalizedAddress] = isStale ? null : item.assetPrice
       } catch {
         continue
       }

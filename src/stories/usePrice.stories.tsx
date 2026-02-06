@@ -439,3 +439,161 @@ This is the same behavior that occurs when the indexer is down or doesn't have a
     },
   },
 }
+
+export const StalePriceFallback: Story = {
+  name: 'Stale Price Fallback (>15min)',
+  render: () => {
+    return (
+      <div style={{ maxWidth: 600 }}>
+        <h3 style={{ margin: '0 0 1rem', color: 'rgb(250, 250, 252)' }}>
+          Stale Price Detection & Fallback
+        </h3>
+
+        <div
+          style={{
+            background: 'rgba(255, 152, 0, 0.15)',
+            border: '1px solid rgba(255, 152, 0, 0.3)',
+            borderRadius: 8,
+            padding: '0.75rem 1rem',
+            marginBottom: '1rem',
+            fontSize: 14,
+            color: 'rgb(250, 250, 252)',
+          }}
+        >
+          <strong>Scenario:</strong> Indexer price is older than 15 minutes
+        </div>
+
+        <div
+          style={{
+            background: 'rgb(48, 48, 55)',
+            padding: '1rem',
+            borderRadius: 8,
+            border: '1px solid rgba(250, 250, 252, 0.05)',
+            marginBottom: '1rem',
+          }}
+        >
+          <h4 style={{ margin: '0 0 0.5rem', fontSize: 14, color: 'rgb(145, 145, 160)' }}>
+            How It Works
+          </h4>
+          <div style={{ fontSize: 13, color: 'rgb(145, 145, 160)', lineHeight: 1.6 }}>
+            <p>When <code>usePrice</code> or <code>useVaultInfo</code> receive price data from the indexer, they check the <code>assetPriceTimestamp</code>:</p>
+
+            <ol style={{ paddingLeft: '1.5rem', margin: '0.5rem 0' }}>
+              <li><strong>Fresh Price (&lt;15min):</strong> Use indexer price, source: "indexer"</li>
+              <li><strong>Stale Price (&gt;15min):</strong> Treat as null, fall back to on-chain oracle, source: "vaultOracle"</li>
+              <li><strong>Missing Timestamp:</strong> Treat as stale, fall back to on-chain</li>
+              <li><strong>Invalid Timestamp:</strong> Treat as stale, fall back to on-chain</li>
+            </ol>
+          </div>
+        </div>
+
+        <div
+          style={{
+            background: 'rgb(48, 48, 55)',
+            padding: '1rem',
+            borderRadius: 8,
+            border: '1px solid rgba(250, 250, 252, 0.05)',
+            marginBottom: '1rem',
+          }}
+        >
+          <h4 style={{ margin: '0 0 0.5rem', fontSize: 14, color: 'rgb(145, 145, 160)' }}>
+            Why 15 Minutes?
+          </h4>
+          <div style={{ fontSize: 13, color: 'rgb(145, 145, 160)', lineHeight: 1.6 }}>
+            <p>The 15-minute threshold balances two concerns:</p>
+            <ul style={{ paddingLeft: '1.5rem', margin: '0.5rem 0' }}>
+              <li><strong>Freshness:</strong> Ensures users see reasonably current prices in volatile markets</li>
+              <li><strong>Reliability:</strong> Prevents excessive on-chain calls for minor indexer delays</li>
+            </ul>
+          </div>
+        </div>
+
+        <div
+          style={{
+            background: 'rgb(48, 48, 55)',
+            padding: '1rem',
+            borderRadius: 8,
+            border: '1px solid rgba(250, 250, 252, 0.05)',
+          }}
+        >
+          <h4 style={{ margin: '0 0 0.5rem', fontSize: 14, color: 'rgb(145, 145, 160)' }}>
+            Code Example
+          </h4>
+          <pre
+            style={{
+              margin: 0,
+              fontSize: 11,
+              overflow: 'auto',
+              background: 'rgb(38, 38, 44)',
+              padding: '0.75rem',
+              borderRadius: 6,
+              color: 'rgb(145, 145, 160)',
+              fontFamily: "'DM Mono', monospace",
+            }}
+          >
+{`// In useIndexerPrices.ts
+const PRICE_STALENESS_THRESHOLD = 15 * 60 * 1000 // 15 minutes
+
+function isPriceStale(timestamp: string | undefined): boolean {
+  if (!timestamp) return true
+
+  try {
+    const priceTime = new Date(timestamp).getTime()
+    if (isNaN(priceTime)) return true
+
+    const now = Date.now()
+    const age = now - priceTime
+    return age > PRICE_STALENESS_THRESHOLD
+  } catch {
+    return true
+  }
+}
+
+// Prices older than 15min are set to null → triggers fallback
+priceMap[vaultAddress] = isStale ? null : item.assetPrice`}
+          </pre>
+        </div>
+
+        <div
+          style={{
+            marginTop: '1rem',
+            padding: '0.75rem 1rem',
+            background: 'rgba(142, 231, 194, 0.15)',
+            border: '1px solid rgba(142, 231, 194, 0.3)',
+            borderRadius: 8,
+            fontSize: 12,
+            color: 'rgb(250, 250, 252)',
+          }}
+        >
+          <strong>✓ Result:</strong> Users always get reliable prices, even when indexer data is outdated
+        </div>
+      </div>
+    )
+  },
+  parameters: {
+    docs: {
+      description: {
+        story: `
+Demonstrates automatic fallback to on-chain pricing when indexer prices are stale (>15 minutes old).
+
+**Staleness Check Flow:**
+1. \`useIndexerPrices\` fetches prices from indexer's \`v2/vault/list\` endpoint
+2. For each price, check if \`assetPriceTimestamp\` is older than 15 minutes
+3. If stale, set price to \`null\` (same as if indexer had no price)
+4. \`usePrice\` detects \`null\` and automatically falls back to on-chain oracle
+5. Source switches from "indexer" to "vaultOracle"
+
+**When This Matters:**
+- Indexer is running but slow to update prices
+- Price feeds are down for specific assets
+- Network issues causing delayed indexer updates
+- Ensures users never see dangerously outdated prices in volatile markets
+
+**Implementation:**
+Both \`useIndexerPrices\` and \`useIndexerVaultData\` check \`assetPriceTimestamp\` before returning prices.
+This check happens transparently at the data layer, so all consuming hooks automatically benefit.
+        `,
+      },
+    },
+  },
+}

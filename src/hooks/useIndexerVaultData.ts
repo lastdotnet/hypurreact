@@ -4,6 +4,7 @@ import { useQuery } from '@tanstack/react-query'
 import { type Address, getAddress } from 'viem'
 import { useVaultConfig } from '../context'
 import { vaultKeys } from '../utils/queryKeys'
+import { isPriceStale } from '../utils/priceUtils'
 import type {
   VaultInfo,
   LTVInfo,
@@ -134,6 +135,9 @@ function transformIndexerData(item: IndexerVaultItem): Partial<VaultInfo> {
     social: e.social,
   })) ?? null
 
+  // Treat stale prices (>15 minutes old) as null to trigger on-chain fallback
+  const isStale = isPriceStale(item.assetPriceTimestamp)
+
   return {
     vault: getAddress(item.vault) as Address,
     vaultName: item.vaultName ?? '',
@@ -143,8 +147,8 @@ function transformIndexerData(item: IndexerVaultItem): Partial<VaultInfo> {
     assetName: '',
     assetSymbol: item.assetSymbol ?? '',
     assetDecimals: item.assetDecimals ?? 18,
-    
-    assetPrice: item.assetPrice,
+
+    assetPrice: isStale ? null : item.assetPrice,
     assetPriceTimestamp: item.assetPriceTimestamp ?? null,
     
     totalAssets: item.totalAssets ? BigInt(item.totalAssets) : 0n,
