@@ -18,12 +18,14 @@ const MOCK_CONFIG_WITH_INDEXER = {
   usdReferenceToken: '0xb8ce59fc3717ada4c02eadf9682a9e934f625ebb' as const,
   indexerUrl: MOCK_INDEXER_URL,
   indexerStaleTime: 60000,
+  retry: { count: 0 }, // Disable retries in tests for immediate error feedback
 }
 
 const MOCK_CONFIG_WITHOUT_INDEXER = {
   chainId: MOCK_CHAIN_ID,
   usdUnitOfAccount: '0x0000000000000000000000000000000000000348' as const,
   usdReferenceToken: '0xb8ce59fc3717ada4c02eadf9682a9e934f625ebb' as const,
+  retry: { count: 0 }, // Disable retries in tests
 }
 
 const MOCK_INDEXER_RESPONSE = {

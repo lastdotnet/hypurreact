@@ -77,4 +77,36 @@ export interface VaultConfig {
    * @example '0x7b27dED9344D9c66FeAF58D151b52d1359aeA807' (HyperEVM)
    */
   eulerEarnGovernedPerspectiveAddress?: Address
+
+  /**
+   * Retry configuration for failed queries.
+   * Controls how many times to retry and with what delay strategy.
+   */
+  retry?: RetryConfig
+}
+
+/**
+ * Configuration for query retry behavior.
+ */
+export interface RetryConfig {
+  /**
+   * Maximum number of retry attempts.
+   * Set to 0 to disable retries, or `false` to never retry.
+   * @default 3
+   */
+  count?: number | false
+
+  /**
+   * Delay between retries in milliseconds.
+   * Can be a number for fixed delay, or a function for custom backoff.
+   * @default Exponential backoff: attempt => Math.min(1000 * 2 ** attempt, 30000)
+   */
+  delay?: number | ((attempt: number, error: Error) => number)
+
+  /**
+   * Function to determine if a specific error should be retried.
+   * Return `false` to skip retries for certain errors (e.g., 404s).
+   * @default Retries all errors except 4xx client errors
+   */
+  shouldRetry?: (error: Error, attempt: number) => boolean
 }

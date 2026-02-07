@@ -30,6 +30,7 @@ vi.mock('../context/useVaultConfig', () => ({
     usdReferenceToken: '0xb8ce59fc3717ada4c02eadf9682a9e934f625ebb' as Address,
     indexerUrl: 'https://indexer-test.example.com',
     indexerStaleTime: 60000,
+    retry: { count: 0 }, // Disable retries in tests for immediate error feedback
   }),
 }))
 

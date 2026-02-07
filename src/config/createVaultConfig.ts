@@ -78,6 +78,23 @@ export function createVaultConfig(config: VaultConfig): VaultConfig {
     }
   }
 
+  // Validate retry config
+  if (config.retry !== undefined) {
+    if (config.retry.count !== undefined && config.retry.count !== false) {
+      if (typeof config.retry.count !== 'number' || config.retry.count < 0) {
+        throw new Error('createVaultConfig: retry.count must be a non-negative number or false')
+      }
+    }
+    if (config.retry.delay !== undefined) {
+      if (typeof config.retry.delay !== 'number' && typeof config.retry.delay !== 'function') {
+        throw new Error('createVaultConfig: retry.delay must be a number or function')
+      }
+    }
+    if (config.retry.shouldRetry !== undefined && typeof config.retry.shouldRetry !== 'function') {
+      throw new Error('createVaultConfig: retry.shouldRetry must be a function')
+    }
+  }
+
   return {
     chainId: config.chainId,
     usdUnitOfAccount: config.usdUnitOfAccount,
@@ -88,5 +105,6 @@ export function createVaultConfig(config: VaultConfig): VaultConfig {
     vaultLensAddress: config.vaultLensAddress,
     governedPerspectiveAddress: config.governedPerspectiveAddress,
     eulerEarnGovernedPerspectiveAddress: config.eulerEarnGovernedPerspectiveAddress,
+    retry: config.retry,
   }
 }

@@ -8,6 +8,7 @@ import {
   type ValidatedIndexerResponse,
   type ValidatedIndexerVaultItem,
 } from '../utils/indexerSchema'
+import { getRetryOptions } from '../utils/retryUtils'
 
 /**
  * Raw indexer data shared across all indexer-derived hooks.
@@ -110,8 +111,10 @@ export async function fetchIndexerData(
  */
 export function useIndexerData(): UseIndexerDataResult {
   const config = useVaultConfig()
-  const { chainId, indexerUrl, indexerStaleTime, onIndexerError } = config
+  const { chainId, indexerUrl, indexerStaleTime, onIndexerError, retry: retryConfig } = config
   const hasIndexerUrl = !!indexerUrl
+
+  const { retry, retryDelay } = getRetryOptions(retryConfig)
 
   const query = useQuery({
     // All derived hooks share this query key for cache deduplication
@@ -125,6 +128,8 @@ export function useIndexerData(): UseIndexerDataResult {
     enabled: hasIndexerUrl,
     staleTime: indexerStaleTime ?? DEFAULT_STALE_TIME,
     gcTime: 5 * 60 * 1000,
+    retry,
+    retryDelay,
   })
 
   return {
