@@ -10,7 +10,7 @@ import { useIndexerEarnVaultList } from '../hooks/useIndexerEarnVaultList'
 import type { ProductId, ProductsConfig } from '../types/products'
 import type { Address } from 'viem'
 
-// Load products from euler-labels - MUST match euler-labels/999/products.json exactly
+// Load products from euler-labels - MUST match lib/euler-labels/999/products.json exactly
 const PRODUCTS: ProductsConfig = {
   'hypurrfi-earn': {
     name: 'HypurrFi Earn',
