@@ -161,7 +161,13 @@ export function useEarnVaultInfo<T extends readonly EarnVaultCategory[]>({
     enabled: enabled && needsVaultLens,
   })
 
-  const { data, source } = mergeEarnVaultData(indexer.data, vaultLens.data, categories, indexerFailed)
+  // When forceOnchain is true, ignore any cached indexer data
+  const { data, source } = mergeEarnVaultData(
+    forceOnchain ? undefined : indexer.data,
+    vaultLens.data,
+    categories,
+    indexerFailed,
+  )
 
   const isLoading = (needsIndexer && indexer.isLoading) || (needsVaultLens && vaultLens.isLoading)
   const isError =

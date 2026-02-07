@@ -216,8 +216,9 @@ export function useVaultInfo<T extends readonly VaultCategory[]>({
     enabled: enabled && needsVaultLens && passesProductFilter,
   })
 
+  // When forceOnchain is true, ignore any cached indexer data
   const { data, source } = mergeVaultData(
-    indexer.data,
+    forceOnchain ? undefined : indexer.data,
     vaultLens.data,
     categories,
     indexerFailed,
