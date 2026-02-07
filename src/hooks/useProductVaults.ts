@@ -20,7 +20,7 @@ export interface UseProductVaultsResult {
  *
  * @example
  * ```tsx
- * import products from '../euler-labels/999/products.json'
+ * import products from '../lib/euler-labels/999/products.json'
  *
  * function EarnVaultsList() {
  *   const { vaults } = useProductVaults({

@@ -276,7 +276,7 @@ function VaultDetailView({ vaultKey }: { vaultKey: VaultKey }) {
       {/* Header */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
         <div>
-          <h2 style={{ margin: 0, color: colors.foreground }}>{data?.vaultName || vault.name}</h2>
+          <h2 style={{ margin: 0, color: colors.foreground }}>{data?.assetSymbol || data?.vaultName || vault.name}</h2>
           <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.5rem', alignItems: 'center' }}>
             <ProductBadge product={vault.product} />
             <span style={{ fontSize: 12, color: colors.mutedForeground, fontFamily: 'monospace' }}>
@@ -411,7 +411,7 @@ function EarnVaultDetailView({ vaultKey }: { vaultKey: VaultKey }) {
       {/* Header */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
         <div>
-          <h2 style={{ margin: 0, color: colors.foreground }}>{data?.vaultName || vault.name}</h2>
+          <h2 style={{ margin: 0, color: colors.foreground }}>{data?.assetSymbol || data?.vaultName || vault.name}</h2>
           <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.5rem', alignItems: 'center' }}>
             <ProductBadge product={vault.product} />
             <span style={{ fontSize: 12, color: colors.mutedForeground, fontFamily: 'monospace' }}>
@@ -789,7 +789,7 @@ export const Dashboard: StoryObj = {
 }
 
 // Earn vault details
-export const EarnUSDHDetail: StoryObj = {
+export const EarnVaultExample1: StoryObj = {
   name: 'Earn: USDH Vault Detail',
   render: () => <EarnVaultDetailView vaultKey="earn-usdh" />,
   parameters: {
@@ -801,7 +801,7 @@ export const EarnUSDHDetail: StoryObj = {
   },
 }
 
-export const EarnUSDCDetail: StoryObj = {
+export const EarnVaultExample2: StoryObj = {
   name: 'Earn: USDC Vault Detail',
   render: () => <EarnVaultDetailView vaultKey="earn-usdc" />,
   parameters: {
@@ -814,7 +814,7 @@ export const EarnUSDCDetail: StoryObj = {
 }
 
 // Prime vault details
-export const PrimeWHYPEDetail: StoryObj = {
+export const PrimeVaultExample1: StoryObj = {
   name: 'Prime: WHYPE Vault Detail',
   render: () => <VaultDetailView vaultKey="prime-whype" />,
   parameters: {
@@ -826,7 +826,7 @@ export const PrimeWHYPEDetail: StoryObj = {
   },
 }
 
-export const PrimeKHYPEDetail: StoryObj = {
+export const PrimeVaultExample2: StoryObj = {
   name: 'Prime: kHYPE Vault Detail',
   render: () => <VaultDetailView vaultKey="prime-khype" />,
   parameters: {
@@ -838,7 +838,7 @@ export const PrimeKHYPEDetail: StoryObj = {
   },
 }
 
-export const PrimeUSDTDetail: StoryObj = {
+export const PrimeVaultExample3: StoryObj = {
   name: 'Prime: USDT0 Vault Detail',
   render: () => <VaultDetailView vaultKey="prime-usdt" />,
   parameters: {
@@ -851,7 +851,7 @@ export const PrimeUSDTDetail: StoryObj = {
 }
 
 // Yield vault details
-export const YieldWHYPEDetail: StoryObj = {
+export const YieldVaultExample1: StoryObj = {
   name: 'Yield: WHYPE Vault Detail',
   render: () => <VaultDetailView vaultKey="yield-whype" />,
   parameters: {
@@ -863,7 +863,7 @@ export const YieldWHYPEDetail: StoryObj = {
   },
 }
 
-export const YieldKHYPEDetail: StoryObj = {
+export const YieldVaultExample2: StoryObj = {
   name: 'Yield: kHYPE Vault Detail',
   render: () => <VaultDetailView vaultKey="yield-khype" />,
   parameters: {
@@ -875,7 +875,7 @@ export const YieldKHYPEDetail: StoryObj = {
   },
 }
 
-export const YieldUSDCDetail: StoryObj = {
+export const YieldVaultExample3: StoryObj = {
   name: 'Yield: USDC Vault Detail',
   render: () => <VaultDetailView vaultKey="yield-usdc" />,
   parameters: {
