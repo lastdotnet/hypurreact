@@ -141,6 +141,17 @@ function UseVaultsDemo() {
             Error loading verified vaults
           </div>
         )}
+        {verificationSource && (
+          <div style={{ marginTop: '0.5rem', fontSize: 12, color: colors.mutedForeground }}>
+            Verification source:{' '}
+            <span style={{
+              color: verificationSource === 'indexer' ? colors.primary : '#72b4fb',
+              fontWeight: 500
+            }}>
+              {verificationSource === 'indexer' ? 'Indexer (perspectives array)' : 'On-chain (verifiedArray)'}
+            </span>
+          </div>
+        )}
       </div>
 
       {/* Filter Toggle */}
