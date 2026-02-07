@@ -208,9 +208,9 @@ function transformVaultLensData(raw: VaultLensRawResult): Partial<VaultInfo> {
     
     supplyAPY,
     borrowAPY,
-    totalAPY: null,
-    rewardAPY: null,
     baseAPY: supplyAPY,
+    intrinsicAPY: null,
+    rewardAPY: null,
     
     supplyCap: raw.supplyCap,
     borrowCap: raw.borrowCap,

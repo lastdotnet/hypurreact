@@ -134,7 +134,6 @@ function copyFieldsForCategory(
     case 'apy':
       if (source.supplyAPY !== undefined) target.supplyAPY = source.supplyAPY
       if (source.borrowAPY !== undefined) target.borrowAPY = source.borrowAPY
-      if (source.totalAPY !== undefined) target.totalAPY = source.totalAPY
       if (source.baseAPY !== undefined) target.baseAPY = source.baseAPY
       if (source.intrinsicAPY !== undefined) target.intrinsicAPY = source.intrinsicAPY
       if (source.rewardAPY !== undefined) target.rewardAPY = source.rewardAPY

@@ -130,11 +130,15 @@ export interface VaultInfoFinancials {
 }
 
 export interface VaultInfoAPY {
+  /** Total supply APY (base + intrinsic + reward) - what depositors earn */
   supplyAPY: number
+  /** Borrow APY - what borrowers pay (only available from VaultLens) */
   borrowAPY: number
-  totalAPY: number | null
+  /** Base lending yield from interest rate model */
   baseAPY: number | null
+  /** Yield from underlying staked assets (kHYPE, wstHYPE, beHYPE) */
   intrinsicAPY: number | null
+  /** Token incentive rewards */
   rewardAPY: number | null
 }
 

@@ -204,17 +204,23 @@ The indexer API returns APY values already formatted as percentages:
 - `5.25` means 5.25% APY (NOT 0.0525)
 - Do NOT multiply by 100 when displaying
 
-**APY Components:**
+**APY Components (Supply Side):**
 | Field | Description | Example |
 |-------|-------------|---------|
-| `baseAPY` | Lending/borrowing yield | 1.5 (1.5%) |
+| `supplyAPY` | Total yield for depositors (base + intrinsic + reward) | 4.16 (4.16%) |
+| `baseAPY` | Lending yield from interest rate model | 1.5 (1.5%) |
 | `intrinsicAPY` | Staking yield (kHYPE, wstHYPE, beHYPE) | 2.16 (2.16%) |
-| `rewardAPY` | Token reward yield | 0.5 (0.5%) |
-| `supplyAPY` / `totalAPY` | Sum of all components | 4.16 (4.16%) |
+| `rewardAPY` | Token incentive rewards | 0.5 (0.5%) |
+
+**Borrow Side:**
+| Field | Description | Source |
+|-------|-------------|--------|
+| `borrowAPY` | Interest rate borrowers pay | VaultLens only |
 
 **Implementation:**
-- `supplyAPY` uses `totalApy` from indexer (NOT `baseApy`)
+- `supplyAPY` uses `totalApy` from indexer (NOT `baseApy`) - this is the sum of all supply-side yields
 - `intrinsicAPY` is extracted from nested `intrinsicApy.apy` object
+- `borrowAPY` is only available from VaultLens (on-chain), not from indexer
 - Staked assets (kHYPE, wstHYPE) have intrinsic yield from underlying staking protocols
 
 ## Common Gotchas

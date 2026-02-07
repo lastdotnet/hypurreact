@@ -168,8 +168,7 @@ function transformIndexerData(item: IndexerVaultItem): Partial<VaultInfo> {
     
     // supplyAPY = baseApy + intrinsicApy + rewardApy (use totalApy from indexer)
     supplyAPY: item.totalApy ?? item.baseApy ?? 0,
-    borrowAPY: 0,
-    totalAPY: item.totalApy ?? null,
+    borrowAPY: 0, // Indexer doesn't provide borrowApy, only available from VaultLens
     baseAPY: item.baseApy ?? null,
     intrinsicAPY: item.intrinsicApy?.apy ?? null,
     rewardAPY: item.rewardApy ?? null,
