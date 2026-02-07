@@ -205,6 +205,9 @@ const vaultConfig = createVaultConfig({
   indexerUrl: 'https://indexer-hyperevm-api-prod.up.railway.app',
   indexerStaleTime: 30_000,
   vaultLensAddress: '0x0eaDDE9EfCf1540dcA8f94e813E12db55f8405a8',
+  // Perspective addresses for verified vault filtering
+  governedPerspectiveAddress: '0x4936Cd82936b6862fDD66CC8c36e1828127a6b57',
+  eulerEarnGovernedPerspectiveAddress: '0x7b27dED9344D9c66FeAF58D151b52d1359aeA807',
 })
 
 const queryClient = new QueryClient({

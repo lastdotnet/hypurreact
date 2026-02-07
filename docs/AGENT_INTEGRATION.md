@@ -71,9 +71,14 @@ No separate router address is needed in config.
 ├── VaultProvider          # Context provider (required)
 ├── createVaultConfig      # Config factory
 ├── useVaultInfo           # Primary hook - multi-category fetch with smart source selection
+├── useEarnVaultInfo       # Earn vault data with strategies
 ├── usePrice               # Single asset price hook
 ├── useVaultOraclePrice    # Low-level on-chain price hook
 ├── usePriceQueryOptions   # TanStack Query options for prefetching
+├── useVaults              # Vault list filtering with verified toggle
+├── useEarnVaults          # Earn vault list filtering with verified toggle
+├── useVerifiedVaults      # Fetch verified vault array from governedPerspective
+├── useVerifiedEarnVaults  # Fetch verified vault array from eulerEarnGovernedPerspective
 └── CATEGORY_PRESETS       # Predefined category combinations
 ```
 
@@ -157,6 +162,48 @@ function useVaultInfo<T extends readonly VaultCategory[]>({
 | `oracle` | oracle, unitOfAccount, unitOfAccountName, unitOfAccountSymbol, unitOfAccountDecimals | VaultLens only |
 
 \* **Price Staleness Check**: Prices older than 15 minutes are treated as unavailable, automatically triggering VaultLens fallback.
+
+### APY Data Format
+
+**Critical: Indexer returns APY values as percentages, not decimals.**
+
+| Value | Meaning | Display |
+|-------|---------|---------|
+| `5.25` | 5.25% APY | `5.25%` |
+| `0.5` | 0.5% APY | `0.5%` |
+
+**Do NOT multiply by 100** when displaying APY values from the indexer.
+
+**APY Components:**
+
+| Field | Description | Source |
+|-------|-------------|--------|
+| `baseAPY` | Lending/borrowing yield | Indexer |
+| `intrinsicAPY` | Staking yield (kHYPE, wstHYPE, beHYPE) | Indexer (nested `intrinsicApy.apy`) |
+| `rewardAPY` | Token reward incentives | Indexer |
+| `supplyAPY` | Total supply APY (base + intrinsic + reward) | Uses `totalApy` from indexer |
+| `totalAPY` | Same as supplyAPY | Indexer |
+
+**Important Implementation Details:**
+
+1. **`supplyAPY` uses `totalApy`** from indexer, NOT `baseApy`. This ensures staked assets (kHYPE, wstHYPE) show their full yield including intrinsic staking rewards.
+
+2. **`intrinsicAPY` is extracted from nested object**: The indexer returns `intrinsicApy: { apy: 2.16, provider: "KINETIQ" }`. The hook extracts `intrinsicApy.apy`.
+
+3. **Earn vault APY fields** (`apy7d`, `apy30d`, `apy90d`, `apyCurrent`) are also already percentages.
+
+**Example:**
+```typescript
+const { data } = useVaultInfo({
+  vaultAddress: '0x...',
+  options: { include: ['apy'] }
+})
+
+// Display directly - no multiplication needed
+<span>{data.supplyAPY?.toFixed(2)}%</span>  // "5.25%"
+<span>{data.baseAPY?.toFixed(2)}%</span>     // "1.50%"
+<span>{data.intrinsicAPY?.toFixed(2)}%</span> // "3.75%"
+```
 
 ### Source Selection Logic
 
@@ -401,10 +448,14 @@ interface VaultConfig {
   usdReferenceToken: Address  // Stablecoin for USD conversion (e.g., USDC)
   indexerUrl?: string         // Optional indexer API URL
   vaultLensAddress?: Address  // Optional VaultLens contract address
+  governedPerspectiveAddress?: Address      // Optional - enables verified vault filtering
+  eulerEarnGovernedPerspectiveAddress?: Address  // Optional - enables verified earn vault filtering
 }
 ```
 
 > Oracle router addresses are fetched per-vault via `vault.oracle()` - no global router config needed.
+>
+> Perspective addresses enable vault verification features. See [VAULT_VERIFICATION.md](./VAULT_VERIFICATION.md) for details.
 
 ### VaultInfoSource
 
@@ -520,3 +571,48 @@ const { priceUSD } = usePrice({
   config: customConfig,  // Override context config
 })
 ```
+
+---
+
+## Vault Verification
+
+Filter vaults by their verification status from Euler's perspective contracts.
+
+### Quick Start
+
+```typescript
+import { useVaults, useEarnVaults } from '@hypurr/vaults'
+
+// Filter regular vaults (Prime, Yield)
+const { vaults, verifiedSet } = useVaults({
+  vaults: allVaultAddresses,
+  verified: true,  // Only return verified vaults
+})
+
+// Filter Earn vaults
+const { vaults: earnVaults } = useEarnVaults({
+  vaults: allEarnVaultAddresses,
+  verified: true,
+})
+```
+
+### Configuration
+
+Add perspective addresses to enable verification:
+
+```typescript
+const config = createVaultConfig({
+  chainId: 999,
+  // ... other config
+  governedPerspectiveAddress: '0x4936Cd82936b6862fDD66CC8c36e1828127a6b57',
+  eulerEarnGovernedPerspectiveAddress: '0x7b27dED9344D9c66FeAF58D151b52d1359aeA807',
+})
+```
+
+### Caching
+
+Verified vault arrays are cached for 5 minutes.
+
+### Full Documentation
+
+See [VAULT_VERIFICATION.md](./VAULT_VERIFICATION.md) for complete API reference and examples.

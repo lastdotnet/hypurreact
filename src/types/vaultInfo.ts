@@ -133,8 +133,9 @@ export interface VaultInfoAPY {
   supplyAPY: number
   borrowAPY: number
   totalAPY: number | null
-  rewardAPY: number | null
   baseAPY: number | null
+  intrinsicAPY: number | null
+  rewardAPY: number | null
 }
 
 export interface VaultInfoCaps {
@@ -234,9 +235,20 @@ export interface VaultInfoSource {
   categoriesFromVaultLens: VaultCategory[]
 }
 
+import type { ProductId, ProductsConfig } from './products'
+
 export interface UseVaultInfoOptions<T extends readonly VaultCategory[]> {
   include: T
   forceOnchain?: boolean
+  /**
+   * Optional product filter. When provided with products config,
+   * the hook will return no data if the vault doesn't belong to the specified product.
+   */
+  product?: ProductId
+  /**
+   * Products configuration. Required when using the product filter.
+   */
+  products?: ProductsConfig
 }
 
 export interface UseVaultInfoResult<T extends readonly VaultCategory[]> {

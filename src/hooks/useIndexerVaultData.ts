@@ -72,7 +72,13 @@ interface IndexerVaultItem {
   cashUSD?: number
   totalShares?: string
   baseApy?: number
-  intrinsicApy?: number | null
+  intrinsicApy?: {
+    apy: number
+    timestamp?: string
+    provider?: string
+    source?: string
+    description?: string | null
+  } | null
   rewardApy?: number | null
   totalApy?: number
   utilization?: number
@@ -160,11 +166,13 @@ function transformIndexerData(item: IndexerVaultItem): Partial<VaultInfo> {
     totalShares: item.totalShares ? BigInt(item.totalShares) : 0n,
     utilization: item.utilization ?? 0,
     
-    supplyAPY: item.baseApy ?? 0,
+    // supplyAPY = baseApy + intrinsicApy + rewardApy (use totalApy from indexer)
+    supplyAPY: item.totalApy ?? item.baseApy ?? 0,
     borrowAPY: 0,
     totalAPY: item.totalApy ?? null,
-    rewardAPY: item.rewardApy ?? null,
     baseAPY: item.baseApy ?? null,
+    intrinsicAPY: item.intrinsicApy?.apy ?? null,
+    rewardAPY: item.rewardApy ?? null,
     
     supplyCap: item.supplyCap ? BigInt(item.supplyCap) : 0n,
     borrowCap: item.borrowCap ? BigInt(item.borrowCap) : 0n,

@@ -61,4 +61,20 @@ export interface VaultConfig {
    * @example '0x0eaDDE9EfCf1540dcA8f94e813E12db55f8405a8' (HyperEVM)
    */
   vaultLensAddress?: Address
+
+  /**
+   * Address of the GovernedPerspective contract for fetching verified vault lists.
+   * When provided, enables the `verified` filter option in useVaults hook.
+   *
+   * @example '0x4936Cd82936b6862fDD66CC8c36e1828127a6b57' (HyperEVM)
+   */
+  governedPerspectiveAddress?: Address
+
+  /**
+   * Address of the EulerEarnGovernedPerspective contract for fetching verified earn vault lists.
+   * When provided, enables the `verified` filter option in useEarnVaults hook.
+   *
+   * @example '0x7b27dED9344D9c66FeAF58D151b52d1359aeA807' (HyperEVM)
+   */
+  eulerEarnGovernedPerspectiveAddress?: Address
 }

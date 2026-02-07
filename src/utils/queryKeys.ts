@@ -19,4 +19,22 @@ export const vaultKeys = {
 
   vaultInfo: (params: { chainId: number; vaultAddress: Address }) =>
     [...vaultKeys.all(), 'vaultInfo', params] as const,
+
+  earnVaultInfo: (params: { chainId: number; vaultAddress: Address }) =>
+    [...vaultKeys.all(), 'earnVaultInfo', params] as const,
+
+  indexerEarnVault: (params: { chainId: number; vaultAddress: Address }) =>
+    [...vaultKeys.all(), 'indexerEarnVault', params] as const,
+
+  verifiedVaults: (params: { chainId: number; perspectiveAddress: Address }) =>
+    [...vaultKeys.all(), 'verifiedVaults', params] as const,
+
+  verifiedEarnVaults: (params: { chainId: number; perspectiveAddress: Address }) =>
+    [...vaultKeys.all(), 'verifiedEarnVaults', params] as const,
+
+  indexerVaultList: (params: { chainId: number }) =>
+    [...vaultKeys.all(), 'indexerVaultList', params] as const,
+
+  indexerEarnVaultList: (params: { chainId: number }) =>
+    [...vaultKeys.all(), 'indexerEarnVaultList', params] as const,
 }

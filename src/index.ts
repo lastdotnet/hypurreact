@@ -1,8 +1,10 @@
 export { createVaultConfig } from './config'
 export type { VaultConfig } from './config'
-export { vaultKeys } from './utils'
+export { vaultKeys, calculateAPY, calculateAPYFromSharePrices, formatAPY, formatAPYPercent } from './utils'
 export { VaultProvider, useVaultConfig } from './context'
 export type { VaultProviderProps } from './context'
+
+// Core vault hooks
 export {
   useVaultOraclePrice,
   usePrice,
@@ -22,6 +24,31 @@ export type {
   UseIndexerVaultDataParams,
   UseIndexerVaultDataResult,
 } from './hooks'
+
+// Earn vault hooks
+export {
+  useEarnVaultInfo,
+  useEarnVaultLensData,
+  useIndexerEarnVaultData,
+} from './hooks'
+export type {
+  UseEarnVaultInfoParams,
+  UseEarnVaultLensDataParams,
+  UseEarnVaultLensDataResult,
+  UseIndexerEarnVaultDataParams,
+  UseIndexerEarnVaultDataResult,
+} from './hooks'
+
+// Product hooks
+export { useProductVaults, useVaultProduct } from './hooks'
+export type {
+  UseProductVaultsParams,
+  UseProductVaultsResult,
+  UseVaultProductParams,
+  UseVaultProductResult,
+} from './hooks'
+
+// Vault info types
 export type {
   VaultCategory,
   VaultInfo,
@@ -38,3 +65,50 @@ export type {
   RewardMetadata,
 } from './types/vaultInfo'
 export { VAULT_CATEGORIES, CATEGORY_PRESETS } from './types/vaultInfo'
+
+// Earn vault info types
+export type {
+  EarnVaultCategory,
+  EarnVaultInfo,
+  EarnVaultInfoSource,
+  UseEarnVaultInfoOptions,
+  UseEarnVaultInfoResult,
+  PartialEarnVaultInfo,
+  EarnVaultInfoIdentity,
+  EarnVaultInfoFinancials,
+  EarnVaultInfoAPY,
+  EarnVaultInfoConfig,
+  EarnVaultInfoStrategies,
+  EarnStrategy,
+  EarnStrategyStatus,
+} from './types/earnVaultInfo'
+export { EARN_VAULT_CATEGORIES, EARN_CATEGORY_PRESETS } from './types/earnVaultInfo'
+
+// Product types
+export type {
+  ProductId,
+  ProductConfig,
+  ProductsConfig,
+} from './types/products'
+export {
+  getProductVaults,
+  isVaultInProduct,
+  getProductForVault,
+  filterVaultsByProduct,
+} from './types/products'
+
+// Vault list hooks with verification
+export {
+  useVaults,
+  useEarnVaults,
+  useVerifiedVaults,
+  useVerifiedEarnVaults,
+} from './hooks'
+export type {
+  UseVaultsParams,
+  UseVaultsResult,
+  UseEarnVaultsParams,
+  UseEarnVaultsResult,
+  UseVerifiedVaultsResult,
+  UseVerifiedEarnVaultsResult,
+} from './hooks'

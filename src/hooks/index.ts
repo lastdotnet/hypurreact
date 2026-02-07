@@ -11,3 +11,34 @@ export { useVaultLensData } from './useVaultLensData'
 export type { UseVaultLensDataParams, UseVaultLensDataResult } from './useVaultLensData'
 export { useIndexerVaultData } from './useIndexerVaultData'
 export type { UseIndexerVaultDataParams, UseIndexerVaultDataResult } from './useIndexerVaultData'
+export { useIndexerVaultList } from './useIndexerVaultList'
+export type { UseIndexerVaultListResult, IndexerVaultListItem } from './useIndexerVaultList'
+
+// Earn vault hooks
+export { useEarnVaultInfo } from './useEarnVaultInfo'
+export type { UseEarnVaultInfoParams } from './useEarnVaultInfo'
+export { useEarnVaultLensData } from './useEarnVaultLensData'
+export type { UseEarnVaultLensDataParams, UseEarnVaultLensDataResult } from './useEarnVaultLensData'
+export { useIndexerEarnVaultData } from './useIndexerEarnVaultData'
+export type { UseIndexerEarnVaultDataParams, UseIndexerEarnVaultDataResult } from './useIndexerEarnVaultData'
+export { useIndexerEarnVaultList } from './useIndexerEarnVaultList'
+export type { UseIndexerEarnVaultListResult } from './useIndexerEarnVaultList'
+
+// Product hooks
+export { useProductVaults, useVaultProduct } from './useProductVaults'
+export type {
+  UseProductVaultsParams,
+  UseProductVaultsResult,
+  UseVaultProductParams,
+  UseVaultProductResult,
+} from './useProductVaults'
+
+// Vault list hooks with verification
+export { useVaults } from './useVaults'
+export type { UseVaultsParams, UseVaultsResult } from './useVaults'
+export { useEarnVaults } from './useEarnVaults'
+export type { UseEarnVaultsParams, UseEarnVaultsResult } from './useEarnVaults'
+export { useVerifiedVaults } from './useVerifiedVaults'
+export type { UseVerifiedVaultsResult } from './useVerifiedVaults'
+export { useVerifiedEarnVaults } from './useVerifiedEarnVaults'
+export type { UseVerifiedEarnVaultsResult } from './useVerifiedEarnVaults'
