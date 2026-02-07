@@ -1,3 +1,6 @@
 [submodule "lib/euler-interfaces"]
 	path = lib/euler-interfaces
 	url = https://github.com/lastdotnet/euler-interfaces.git
+[submodule "euler-labels"]
+	path = euler-labels
+	url = https://github.com/lastdotnet/euler-labels.git

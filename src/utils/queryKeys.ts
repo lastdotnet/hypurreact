@@ -19,4 +19,10 @@ export const vaultKeys = {
 
   vaultInfo: (params: { chainId: number; vaultAddress: Address }) =>
     [...vaultKeys.all(), 'vaultInfo', params] as const,
+
+  earnVaultInfo: (params: { chainId: number; vaultAddress: Address }) =>
+    [...vaultKeys.all(), 'earnVaultInfo', params] as const,
+
+  indexerEarnVault: (params: { chainId: number; vaultAddress: Address }) =>
+    [...vaultKeys.all(), 'indexerEarnVault', params] as const,
 }

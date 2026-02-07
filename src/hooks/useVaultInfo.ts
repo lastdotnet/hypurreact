@@ -16,6 +16,7 @@ import {
   VAULTLENS_ONLY_CATEGORIES,
   OVERLAP_CATEGORIES,
 } from '../types/vaultInfo'
+import { isVaultInProduct } from '../types/products'
 
 export interface UseVaultInfoParams<T extends readonly VaultCategory[]> {
   vaultAddress: Address
@@ -134,8 +135,9 @@ function copyFieldsForCategory(
       if (source.supplyAPY !== undefined) target.supplyAPY = source.supplyAPY
       if (source.borrowAPY !== undefined) target.borrowAPY = source.borrowAPY
       if (source.totalAPY !== undefined) target.totalAPY = source.totalAPY
-      if (source.rewardAPY !== undefined) target.rewardAPY = source.rewardAPY
       if (source.baseAPY !== undefined) target.baseAPY = source.baseAPY
+      if (source.intrinsicAPY !== undefined) target.intrinsicAPY = source.intrinsicAPY
+      if (source.rewardAPY !== undefined) target.rewardAPY = source.rewardAPY
       break
     case 'caps':
       if (source.supplyCap !== undefined) target.supplyCap = source.supplyCap
@@ -190,15 +192,19 @@ export function useVaultInfo<T extends readonly VaultCategory[]>({
   options,
   enabled = true,
 }: UseVaultInfoParams<T>): UseVaultInfoResult<T> {
-  const { include, forceOnchain = false } = options
+  const { include, forceOnchain = false, product, products } = options
   const categories = include
+
+  // Check if vault belongs to the specified product (if filtering is enabled)
+  const passesProductFilter =
+    !product || !products || isVaultInProduct(products, vaultAddress, product)
 
   const needsIndexer = !forceOnchain && categoriesNeedIndexer(categories)
   const needsVaultLensForCategories = categoriesNeedVaultLens(categories)
 
   const indexer = useIndexerVaultData({
     vaultAddress,
-    enabled: enabled && needsIndexer,
+    enabled: enabled && needsIndexer && passesProductFilter,
   })
 
   const indexerFailed = needsIndexer && indexer.isError
@@ -207,7 +213,7 @@ export function useVaultInfo<T extends readonly VaultCategory[]>({
 
   const vaultLens = useVaultLensData({
     vaultAddress,
-    enabled: enabled && needsVaultLens,
+    enabled: enabled && needsVaultLens && passesProductFilter,
   })
 
   const { data, source } = mergeVaultData(

@@ -11,3 +11,20 @@ export { useVaultLensData } from './useVaultLensData'
 export type { UseVaultLensDataParams, UseVaultLensDataResult } from './useVaultLensData'
 export { useIndexerVaultData } from './useIndexerVaultData'
 export type { UseIndexerVaultDataParams, UseIndexerVaultDataResult } from './useIndexerVaultData'
+
+// Earn vault hooks
+export { useEarnVaultInfo } from './useEarnVaultInfo'
+export type { UseEarnVaultInfoParams } from './useEarnVaultInfo'
+export { useEarnVaultLensData } from './useEarnVaultLensData'
+export type { UseEarnVaultLensDataParams, UseEarnVaultLensDataResult } from './useEarnVaultLensData'
+export { useIndexerEarnVaultData } from './useIndexerEarnVaultData'
+export type { UseIndexerEarnVaultDataParams, UseIndexerEarnVaultDataResult } from './useIndexerEarnVaultData'
+
+// Product hooks
+export { useProductVaults, useVaultProduct } from './useProductVaults'
+export type {
+  UseProductVaultsParams,
+  UseProductVaultsResult,
+  UseVaultProductParams,
+  UseVaultProductResult,
+} from './useProductVaults'
