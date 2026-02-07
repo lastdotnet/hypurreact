@@ -186,6 +186,52 @@ function copyFieldsForCategory(
   }
 }
 
+/**
+ * Fetches vault data with intelligent source selection between indexer and on-chain.
+ *
+ * This is the primary hook for fetching vault information. It automatically:
+ * - Uses the indexer as primary source (faster, cached)
+ * - Falls back to VaultLens (on-chain) if indexer fails
+ * - Queries both sources in parallel when needed
+ * - Returns typed data based on requested categories
+ *
+ * @param params - Hook parameters
+ * @param params.vaultAddress - The vault contract address to fetch data for
+ * @param params.options - Configuration options
+ * @param params.options.include - Categories to fetch (e.g., `['price', 'apy', 'financials']`)
+ * @param params.options.forceOnchain - Skip indexer and use VaultLens only (default: false)
+ * @param params.options.product - Optional product filter (requires `products` config)
+ * @param params.options.products - Products configuration for filtering
+ * @param params.enabled - Whether to enable the query (default: true)
+ *
+ * @returns Query result with typed data based on requested categories
+ *
+ * @example
+ * ```tsx
+ * import { useVaultInfo, CATEGORY_PRESETS } from '@hypurr/vaults'
+ *
+ * function VaultCard({ address }: { address: Address }) {
+ *   const { data, isLoading, source } = useVaultInfo({
+ *     vaultAddress: address,
+ *     options: { include: CATEGORY_PRESETS.card }
+ *   })
+ *
+ *   if (isLoading) return <div>Loading...</div>
+ *
+ *   return (
+ *     <div>
+ *       <h2>{data?.vaultName}</h2>
+ *       <p>Price: ${data?.assetPrice?.toFixed(2)}</p>
+ *       <p>APY: {data?.supplyAPY?.toFixed(2)}%</p>
+ *       <small>Source: {source.indexer ? 'Indexer' : 'VaultLens'}</small>
+ *     </div>
+ *   )
+ * }
+ * ```
+ *
+ * @see {@link CATEGORY_PRESETS} for common category combinations
+ * @see {@link VAULT_CATEGORIES} for all available categories
+ */
 export function useVaultInfo<T extends readonly VaultCategory[]>({
   vaultAddress,
   options,

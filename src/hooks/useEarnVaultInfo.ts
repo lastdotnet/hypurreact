@@ -137,6 +137,47 @@ function copyFieldsForCategory(
   }
 }
 
+/**
+ * Fetches Euler Earn vault data with intelligent source selection.
+ *
+ * Earn vaults are yield aggregators that allocate deposits across multiple
+ * underlying strategies. This hook fetches Earn-specific data including
+ * APY calculations, strategy allocations, and vault configuration.
+ *
+ * @param params - Hook parameters
+ * @param params.vaultAddress - The Earn vault contract address
+ * @param params.options - Configuration options
+ * @param params.options.include - Categories to fetch (e.g., `['identity', 'apy', 'strategies']`)
+ * @param params.options.forceOnchain - Skip indexer and use EarnVaultLens only (default: false)
+ * @param params.enabled - Whether to enable the query (default: true)
+ *
+ * @returns Query result with typed data based on requested categories
+ *
+ * @example
+ * ```tsx
+ * import { useEarnVaultInfo, EARN_CATEGORY_PRESETS } from '@hypurr/vaults'
+ *
+ * function EarnVaultCard({ address }: { address: Address }) {
+ *   const { data, isLoading, source } = useEarnVaultInfo({
+ *     vaultAddress: address,
+ *     options: { include: EARN_CATEGORY_PRESETS.dashboard }
+ *   })
+ *
+ *   if (isLoading) return <div>Loading...</div>
+ *
+ *   return (
+ *     <div>
+ *       <h2>{data?.vaultName}</h2>
+ *       <p>7d APY: {data?.apy7d?.toFixed(2)}%</p>
+ *       <p>TVL: ${data?.totalAssetsUSD?.toLocaleString()}</p>
+ *     </div>
+ *   )
+ * }
+ * ```
+ *
+ * @see {@link EARN_CATEGORY_PRESETS} for common category combinations
+ * @see {@link EARN_VAULT_CATEGORIES} for all available categories
+ */
 export function useEarnVaultInfo<T extends readonly EarnVaultCategory[]>({
   vaultAddress,
   options,
