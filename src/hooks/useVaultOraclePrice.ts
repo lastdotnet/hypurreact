@@ -127,6 +127,8 @@ export function useVaultOraclePrice({
   let onchainPrice = 0
   if (priceInUoA && uoaInUSD) {
     const assetInUoa = Number(formatUnits(priceInUoA, actualUoaDecimals || 18))
+    // USD reference token decimals (6) is a network-inherent constant on HyperEVM.
+    // The USD reference token (USDC) uses 6 decimals across all supported networks.
     const uoaToUsd = Number(formatUnits(uoaInUSD, 6))
     onchainPrice = assetInUoa * uoaToUsd
   } else if (priceInUoA && isUSDUnitOfAccount) {

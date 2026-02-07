@@ -1,30 +1,9 @@
 'use client'
 
-import { useQuery } from '@tanstack/react-query'
+import { useMemo } from 'react'
 import { type Address, getAddress } from 'viem'
-import type { VaultConfig } from '../config'
-import { useVaultConfig } from '../context'
-import { vaultKeys } from '../utils/queryKeys'
+import { useIndexerData } from './useIndexerData'
 import { isPriceStale } from '../utils/priceUtils'
-
-export interface IndexerVaultItem {
-  vault: string
-  asset?: string
-  assetPrice: number | null
-  assetPriceTimestamp?: string
-  assetSymbol?: string
-  oracle?: string
-  unitOfAccount?: string
-}
-
-export interface IndexerResponse {
-  items: IndexerVaultItem[]
-  pagination: {
-    page: number
-    limit: number
-    total: number
-  }
-}
 
 export type IndexerPriceMap = Record<Address, number | null>
 
@@ -36,83 +15,51 @@ export interface UseIndexerPricesResult {
   error: Error | null
 }
 
-const DEFAULT_STALE_TIME = 60_000
+/**
+ * Hook to get asset prices for all vaults from the indexer.
+ *
+ * Derives data from the shared indexer cache (useIndexerData),
+ * so multiple hooks calling the indexer share a single API request.
+ *
+ * Prices older than 15 minutes are treated as stale (null) to trigger
+ * on-chain fallback.
+ *
+ * @example
+ * ```tsx
+ * function PriceDisplay({ vaultAddress }: { vaultAddress: Address }) {
+ *   const { data: prices, isLoading } = useIndexerPrices()
+ *
+ *   if (isLoading) return <span>Loading...</span>
+ *
+ *   const price = prices?.[vaultAddress]
+ *   return <span>${price?.toFixed(2) ?? 'N/A'}</span>
+ * }
+ * ```
+ */
+export function useIndexerPrices(): UseIndexerPricesResult {
+  const { data: indexerData, isLoading, isError, isSuccess, error } = useIndexerData()
 
-async function fetchIndexerPrices(
-  indexerUrl: string,
-  chainId: number,
-  onIndexerError?: (error: Error) => void,
-): Promise<IndexerPriceMap> {
-  const url = `${indexerUrl}/v2/vault/list?chainId=${chainId}`
+  // Derive price map from shared indexer data
+  const priceMap = useMemo(() => {
+    if (!indexerData?.items) return undefined
 
-  const body = {
-    chainId,
-    limit: '100',
-    page: '1',
-    orderBy: 'totalSupply',
-    orderDirection: 'desc',
-    onlyInWallet: false,
-    settings: {
-      disableIntrinsicApy: false,
-      disableRewardsApy: false,
-    },
-  }
-
-  try {
-    const response = await fetch(url, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(body),
-    })
-
-    if (!response.ok) {
-      const error = new Error(`Indexer request failed: ${response.status} ${response.statusText}`)
-      onIndexerError?.(error)
-      throw error
-    }
-
-    const data: IndexerResponse = await response.json()
-
-    const priceMap: IndexerPriceMap = {}
-    for (const item of data.items) {
+    const map: IndexerPriceMap = {}
+    for (const item of indexerData.items) {
       try {
         const normalizedAddress = getAddress(item.vault) as Address
         // Treat stale prices (>15 minutes old) as null to trigger on-chain fallback
         const isStale = isPriceStale(item.assetPriceTimestamp)
-        priceMap[normalizedAddress] = isStale ? null : item.assetPrice
+        map[normalizedAddress] = isStale ? null : item.assetPrice
       } catch {
+        // Skip invalid addresses
         continue
       }
     }
+    return map
+  }, [indexerData?.items])
 
-    return priceMap
-  } catch (error) {
-    onIndexerError?.(error instanceof Error ? error : new Error(String(error)))
-    throw error
-  }
-}
-
-export function useIndexerPrices(configOverride?: Partial<VaultConfig>): UseIndexerPricesResult {
-  const contextConfig = useVaultConfig()
-  const config = { ...contextConfig, ...configOverride }
-
-  const { chainId, indexerUrl, indexerStaleTime, onIndexerError } = config
-  const hasIndexerUrl = !!indexerUrl
-
-  const query = useQuery({
-    queryKey: vaultKeys.indexerPrices({ chainId }),
-    queryFn: () => {
-      if (!indexerUrl) {
-        return {} as IndexerPriceMap
-      }
-      return fetchIndexerPrices(indexerUrl, chainId, onIndexerError)
-    },
-    enabled: hasIndexerUrl,
-    staleTime: indexerStaleTime ?? DEFAULT_STALE_TIME,
-    gcTime: 5 * 60 * 1000,
-  })
-
-  if (!hasIndexerUrl) {
+  // If no indexer URL configured, return empty map (not undefined)
+  if (!isLoading && !indexerData && !isError) {
     return {
       data: {},
       isLoading: false,
@@ -123,10 +70,10 @@ export function useIndexerPrices(configOverride?: Partial<VaultConfig>): UseInde
   }
 
   return {
-    data: query.data,
-    isLoading: query.isLoading,
-    isError: query.isError,
-    isSuccess: query.isSuccess,
-    error: query.error,
+    data: priceMap,
+    isLoading,
+    isError,
+    isSuccess,
+    error,
   }
 }
