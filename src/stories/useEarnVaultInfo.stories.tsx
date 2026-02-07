@@ -1,14 +1,7 @@
 import type { Meta, StoryObj } from '@storybook/react'
 import { useEarnVaultInfo } from '../hooks/useEarnVaultInfo'
 import type { EarnVaultCategory } from '../types/earnVaultInfo'
-import { EARN_CATEGORY_PRESETS } from '..'
-
-// Local formatAPY for indexer data which returns APY as percentages (e.g., 5.25 for 5.25%)
-// Note: The package's formatAPY expects decimals (0.05 for 5%) and multiplies by 100
-function formatAPY(value: number | null | undefined): string {
-  if (value === null || value === undefined) return '--'
-  return `${value.toFixed(2)}%`
-}
+import { EARN_CATEGORY_PRESETS, formatAPYPercent } from '..'
 
 // Real Earn vault addresses on HyperEVM
 const EARN_VAULTS = {
@@ -217,7 +210,7 @@ function UseEarnVaultInfoDemo({ vaultAddress, categories, forceOnchain }: UseEar
                       Current
                     </div>
                     <div style={{ fontSize: 18, fontWeight: 600, color: colors.primary }}>
-                      {formatAPY(data.apyCurrent ?? null)}
+                      {formatAPYPercent(data.apyCurrent ?? null)}
                     </div>
                   </div>
                   <div style={{ textAlign: 'center' }}>
@@ -225,7 +218,7 @@ function UseEarnVaultInfoDemo({ vaultAddress, categories, forceOnchain }: UseEar
                       7 Day
                     </div>
                     <div style={{ fontSize: 18, fontWeight: 600, color: colors.foreground }}>
-                      {formatAPY(data.apy7d ?? null)}
+                      {formatAPYPercent(data.apy7d ?? null)}
                     </div>
                   </div>
                   <div style={{ textAlign: 'center' }}>
@@ -233,7 +226,7 @@ function UseEarnVaultInfoDemo({ vaultAddress, categories, forceOnchain }: UseEar
                       30 Day
                     </div>
                     <div style={{ fontSize: 18, fontWeight: 600, color: colors.foreground }}>
-                      {formatAPY(data.apy30d ?? null)}
+                      {formatAPYPercent(data.apy30d ?? null)}
                     </div>
                   </div>
                   <div style={{ textAlign: 'center' }}>
@@ -241,7 +234,7 @@ function UseEarnVaultInfoDemo({ vaultAddress, categories, forceOnchain }: UseEar
                       90 Day
                     </div>
                     <div style={{ fontSize: 18, fontWeight: 600, color: colors.foreground }}>
-                      {formatAPY(data.apy90d ?? null)}
+                      {formatAPYPercent(data.apy90d ?? null)}
                     </div>
                   </div>
                 </div>

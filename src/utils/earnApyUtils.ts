@@ -80,13 +80,41 @@ export function calculateAPYFromSharePrices(
 /**
  * Format APY as a percentage string.
  *
+ * **Note:** This function expects APY as a decimal (0.05 for 5%) and multiplies by 100.
+ * For indexer APY values that are already percentages, use `formatAPYPercent` instead.
+ *
  * @param apy - APY as a decimal (e.g., 0.05 for 5%)
  * @param decimals - Number of decimal places (default: 2)
  * @returns Formatted percentage string (e.g., "5.00%")
+ * @see formatAPYPercent for indexer APY values
  */
 export function formatAPY(apy: number | null, decimals: number = 2): string {
   if (apy === null) {
     return '--'
   }
   return `${(apy * 100).toFixed(decimals)}%`
+}
+
+/**
+ * Format APY that is already a percentage value.
+ *
+ * Use this for APY values from the indexer API, which returns APY as percentages
+ * (e.g., 5.25 means 5.25%, NOT 0.0525).
+ *
+ * @param apy - APY as a percentage (e.g., 5.25 for 5.25%)
+ * @param decimals - Number of decimal places (default: 2)
+ * @returns Formatted percentage string (e.g., "5.25%")
+ *
+ * @example
+ * ```typescript
+ * const { data } = useVaultInfo({ vaultAddress, options: { include: ['apy'] } })
+ * formatAPYPercent(data?.supplyAPY) // "5.25%" (correct)
+ * formatAPY(data?.supplyAPY)        // "525.00%" (wrong!)
+ * ```
+ */
+export function formatAPYPercent(apy: number | null | undefined, decimals: number = 2): string {
+  if (apy === null || apy === undefined) {
+    return '--'
+  }
+  return `${apy.toFixed(decimals)}%`
 }

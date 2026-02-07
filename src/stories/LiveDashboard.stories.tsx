@@ -8,6 +8,7 @@ import { useVaults } from '../hooks/useVaults'
 import { useEarnVaults } from '../hooks/useEarnVaults'
 import { useVerifiedVaults } from '../hooks/useVerifiedVaults'
 import { useVerifiedEarnVaults } from '../hooks/useVerifiedEarnVaults'
+import { formatAPYPercent } from '../utils/earnApyUtils'
 import type { Address } from 'viem'
 import type { ProductId } from '../types/products'
 
@@ -104,10 +105,7 @@ function formatUSD(value: number | null | undefined): string {
   return `$${value.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
 }
 
-function formatAPY(value: number | null | undefined): string {
-  if (value === null || value === undefined) return '-'
-  return `${value.toFixed(2)}%`
-}
+// Use formatAPYPercent from utils - indexer returns APY as percentages (5.25 = 5.25%)
 
 function formatAddress(addr: Address | string | null | undefined): string {
   if (!addr) return '-'
@@ -232,7 +230,7 @@ function VaultOverviewCard({ vaultKey, isVerified }: { vaultKey: VaultKey; isVer
           <ProductBadge product={vault.product} />
         </div>
         <div style={{ textAlign: 'right' }}>
-          <div style={{ color: colors.primary, fontWeight: 700, fontSize: 18 }}>{formatAPY(totalAPY)}</div>
+          <div style={{ color: colors.primary, fontWeight: 700, fontSize: 18 }}>{formatAPYPercent(totalAPY)}</div>
           <div style={{ fontSize: 11, color: colors.mutedForeground }}>
             {isEarn ? '7d APY' : 'Supply APY'}
           </div>
@@ -287,7 +285,7 @@ function VaultDetailView({ vaultKey }: { vaultKey: VaultKey }) {
           </div>
         </div>
         <div style={{ textAlign: 'right' }}>
-          <div style={{ color: colors.primary, fontSize: 28, fontWeight: 700 }}>{formatAPY(data?.supplyAPY)}</div>
+          <div style={{ color: colors.primary, fontSize: 28, fontWeight: 700 }}>{formatAPYPercent(data?.supplyAPY)}</div>
           <div style={{ fontSize: 12, color: colors.mutedForeground }}>Total Supply APY</div>
         </div>
       </div>
@@ -326,11 +324,11 @@ function VaultDetailView({ vaultKey }: { vaultKey: VaultKey }) {
 
       {/* APY Breakdown */}
       <Section title="APY Breakdown">
-        <DataRow label="Total Supply APY" value={formatAPY(data?.supplyAPY)} highlight />
-        <DataRow label="Base APY" value={formatAPY(data?.baseAPY)} />
-        <DataRow label="Intrinsic APY" value={formatAPY(data?.intrinsicAPY)} />
-        <DataRow label="Reward APY" value={formatAPY(data?.rewardAPY)} />
-        <DataRow label="Borrow APY" value={formatAPY(data?.borrowAPY)} />
+        <DataRow label="Total Supply APY" value={formatAPYPercent(data?.supplyAPY)} highlight />
+        <DataRow label="Base APY" value={formatAPYPercent(data?.baseAPY)} />
+        <DataRow label="Intrinsic APY" value={formatAPYPercent(data?.intrinsicAPY)} />
+        <DataRow label="Reward APY" value={formatAPYPercent(data?.rewardAPY)} />
+        <DataRow label="Borrow APY" value={formatAPYPercent(data?.borrowAPY)} />
       </Section>
 
       {/* Financials */}
@@ -422,7 +420,7 @@ function EarnVaultDetailView({ vaultKey }: { vaultKey: VaultKey }) {
           </div>
         </div>
         <div style={{ textAlign: 'right' }}>
-          <div style={{ color: colors.primary, fontSize: 28, fontWeight: 700 }}>{formatAPY(data?.apy7d)}</div>
+          <div style={{ color: colors.primary, fontSize: 28, fontWeight: 700 }}>{formatAPYPercent(data?.apy7d)}</div>
           <div style={{ fontSize: 12, color: colors.mutedForeground }}>7-Day APY</div>
         </div>
       </div>
@@ -455,10 +453,10 @@ function EarnVaultDetailView({ vaultKey }: { vaultKey: VaultKey }) {
 
       {/* APY */}
       <Section title="APY History">
-        <DataRow label="Current APY" value={formatAPY(data?.apyCurrent)} highlight />
-        <DataRow label="7-Day APY" value={formatAPY(data?.apy7d)} />
-        <DataRow label="30-Day APY" value={formatAPY(data?.apy30d)} />
-        <DataRow label="90-Day APY" value={formatAPY(data?.apy90d)} />
+        <DataRow label="Current APY" value={formatAPYPercent(data?.apyCurrent)} highlight />
+        <DataRow label="7-Day APY" value={formatAPYPercent(data?.apy7d)} />
+        <DataRow label="30-Day APY" value={formatAPYPercent(data?.apy30d)} />
+        <DataRow label="90-Day APY" value={formatAPYPercent(data?.apy90d)} />
       </Section>
 
       {/* Financials */}

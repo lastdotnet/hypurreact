@@ -1,6 +1,6 @@
 export { createVaultConfig } from './config'
 export type { VaultConfig } from './config'
-export { vaultKeys, calculateAPY, calculateAPYFromSharePrices, formatAPY } from './utils'
+export { vaultKeys, calculateAPY, calculateAPYFromSharePrices, formatAPY, formatAPYPercent } from './utils'
 export { VaultProvider, useVaultConfig } from './context'
 export type { VaultProviderProps } from './context'
 
