@@ -37,8 +37,9 @@ const DEFAULT_STALE_TIME = 60_000
 
 /**
  * Fetches vault data from the indexer API with validation.
+ * @internal Exported for use by Suspense hooks
  */
-async function fetchIndexerData(
+export async function fetchIndexerData(
   indexerUrl: string,
   chainId: number,
   onIndexerError?: (error: Error) => void,

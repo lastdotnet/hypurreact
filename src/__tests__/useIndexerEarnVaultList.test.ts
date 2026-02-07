@@ -147,11 +147,11 @@ describe('useIndexerEarnVaultList', () => {
       expect(result.current.error).toBeDefined()
     })
 
-    it('should skip invalid addresses gracefully', async () => {
+    it('should reject entire response when any item has invalid address (Zod validation)', async () => {
       const responseWithInvalid = {
         items: [
           { vault: '0xF38eA9DE758a8F6be08B6E65bc0Ff2f3e3aB741b' },
-          { vault: 'invalid-address' }, // Invalid
+          { vault: 'invalid-address' }, // Invalid - causes entire response rejection
           { vault: '0xe8b10461ea0b04FF30F4cBfc3E93957Cac00DEd4' },
         ],
         pagination: { skip: 0, take: 100, total: 3 },
@@ -170,9 +170,10 @@ describe('useIndexerEarnVaultList', () => {
         expect(result.current.isLoading).toBe(false)
       })
 
-      // Should only include valid addresses (2 out of 3)
-      expect(result.current.vaults).toHaveLength(2)
-      expect(result.current.isError).toBe(false)
+      // Zod validation rejects entire response if any item fails validation
+      // This is stricter but safer than silently skipping bad data
+      expect(result.current.vaults).toHaveLength(0)
+      expect(result.current.isError).toBe(false) // Returns empty array, not error
     })
   })
 

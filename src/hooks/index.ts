@@ -44,3 +44,15 @@ export { useVerifiedVaults } from './useVerifiedVaults'
 export type { UseVerifiedVaultsResult } from './useVerifiedVaults'
 export { useVerifiedEarnVaults } from './useVerifiedEarnVaults'
 export type { UseVerifiedEarnVaultsResult } from './useVerifiedEarnVaults'
+
+// Suspense-enabled hooks
+export { useVaultInfoSuspense } from './useVaultInfoSuspense'
+export type {
+  UseVaultInfoSuspenseParams,
+  UseVaultInfoSuspenseResult,
+} from './useVaultInfoSuspense'
+export { useEarnVaultInfoSuspense } from './useEarnVaultInfoSuspense'
+export type {
+  UseEarnVaultInfoSuspenseParams,
+  UseEarnVaultInfoSuspenseResult,
+} from './useEarnVaultInfoSuspense'

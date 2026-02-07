@@ -112,3 +112,15 @@ export type {
   UseVerifiedVaultsResult,
   UseVerifiedEarnVaultsResult,
 } from './hooks'
+
+// Suspense-enabled hooks for use with React Suspense boundaries
+export {
+  useVaultInfoSuspense,
+  useEarnVaultInfoSuspense,
+} from './hooks'
+export type {
+  UseVaultInfoSuspenseParams,
+  UseVaultInfoSuspenseResult,
+  UseEarnVaultInfoSuspenseParams,
+  UseEarnVaultInfoSuspenseResult,
+} from './hooks'

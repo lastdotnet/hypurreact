@@ -28,8 +28,9 @@ export interface UseIndexerVaultDataResult {
 
 /**
  * Transforms a validated indexer vault item into the VaultInfo format.
+ * @internal Exported for use by Suspense hooks
  */
-function transformIndexerData(item: ValidatedIndexerVaultItem): Partial<VaultInfo> {
+export function transformIndexerVaultData(item: ValidatedIndexerVaultItem): Partial<VaultInfo> {
   const collateralLTVs: LTVInfo[] = (item.exposure ?? []).map(exp => ({
     collateral: getAddress(exp.collateral) as Address,
     borrowLTV: BigInt(exp.borrowLTV),
@@ -192,7 +193,7 @@ export function useIndexerVaultData({
 
     if (!vaultItem) return undefined
 
-    return transformIndexerData(vaultItem)
+    return transformIndexerVaultData(vaultItem)
   }, [indexerData?.items, vaultAddress, enabled])
 
   // If disabled, return early

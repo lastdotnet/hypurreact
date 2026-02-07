@@ -4,6 +4,7 @@ import { useQuery } from '@tanstack/react-query'
 import { type Address, getAddress } from 'viem'
 import { useVaultConfig } from '../context'
 import { vaultKeys } from '../utils/queryKeys'
+import { validateEarnVaultListResponse } from '../utils/indexerSchema'
 
 export interface UseIndexerEarnVaultListResult {
   /**
@@ -24,19 +25,6 @@ export interface UseIndexerEarnVaultListResult {
   error: Error | null
 }
 
-interface IndexerEarnVaultItem {
-  vault: string
-}
-
-interface IndexerEarnVaultsResponse {
-  items: IndexerEarnVaultItem[]
-  pagination: {
-    skip: number
-    take: number
-    total: number
-  }
-}
-
 async function fetchIndexerEarnVaultList(
   indexerUrl: string,
   chainId: number,
@@ -52,7 +40,13 @@ async function fetchIndexerEarnVaultList(
     throw new Error(`Indexer request failed: ${response.status} ${response.statusText}`)
   }
 
-  const data: IndexerEarnVaultsResponse = await response.json()
+  const rawData = await response.json()
+
+  // Validate API response against schema
+  const data = validateEarnVaultListResponse(rawData)
+  if (!data) {
+    return []
+  }
 
   const vaults: Address[] = []
 

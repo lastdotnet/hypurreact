@@ -162,3 +162,134 @@ export function validateIndexerResponse(data: unknown): ValidatedIndexerResponse
 
   return result.data
 }
+
+// ============================================================================
+// Earn Vault Schemas
+// ============================================================================
+
+/**
+ * Schema for Earn vault strategy data
+ */
+const IndexerEarnStrategySchema = z.object({
+  strategy: AddressSchema,
+  strategyVaultName: z.string().optional(),
+  strategyVaultSymbol: z.string().optional(),
+  allocatedAssets: z.string().optional(),
+  allocatedAssetsUSD: z.number().nullable().optional(),
+  availableAssets: z.string().optional(),
+  currentAllocationCap: z.string().optional(),
+  pendingAllocationCap: z.string().optional(),
+  pendingAllocationCapValidAt: z.string().optional(),
+  removableAt: z.string().optional(),
+  status: z.string().optional(),
+}).passthrough()
+
+/**
+ * Schema for an Earn vault from the indexer API
+ */
+const IndexerEarnVaultSchema = z.object({
+  vault: AddressSchema,
+  vaultName: z.string().optional(),
+  vaultSymbol: z.string().optional(),
+  vaultDecimals: z.number().optional(),
+  asset: AddressSchema.optional(),
+  assetName: z.string().optional(),
+  assetSymbol: z.string().optional(),
+  assetDecimals: z.number().optional(),
+  totalShares: z.string().optional(),
+  totalAssets: z.string().optional(),
+  totalAssetsUSD: z.number().nullable().optional(),
+  availableAssets: z.string().optional(),
+  availableAssetsUSD: z.number().nullable().optional(),
+  lostAssets: z.string().optional(),
+  performanceFee: z.string().optional(),
+  feeReceiver: AddressSchema.optional(),
+  timelock: z.string().optional(),
+  owner: AddressSchema.optional(),
+  creator: AddressSchema.optional(),
+  curator: AddressSchema.optional(),
+  guardian: AddressSchema.optional(),
+  evc: AddressSchema.optional(),
+  permit2: AddressSchema.optional(),
+  supplyQueue: z.array(AddressSchema).optional(),
+  strategies: z.array(IndexerEarnStrategySchema).optional(),
+  apy7d: z.number().nullable().optional(),
+  apy30d: z.number().nullable().optional(),
+  apy90d: z.number().nullable().optional(),
+  apyCurrent: z.number().nullable().optional(),
+  timestamp: z.string().optional(),
+  perspectives: z.array(AddressSchema).optional(),
+}).passthrough()
+
+/**
+ * Schema for the Earn vault detail endpoint response (/v1/earn/vault)
+ */
+export const IndexerEarnVaultResponseSchema = z.object({
+  vault: IndexerEarnVaultSchema,
+  strategies: z.array(IndexerEarnStrategySchema).optional(),
+}).passthrough()
+
+/**
+ * Schema for the Earn vault list item
+ */
+const IndexerEarnVaultListItemSchema = z.object({
+  vault: AddressSchema,
+}).passthrough()
+
+/**
+ * Schema for the Earn vault list endpoint response (/v1/earn/vaults)
+ */
+export const IndexerEarnVaultListResponseSchema = z.object({
+  items: z.array(IndexerEarnVaultListItemSchema),
+  pagination: z.object({
+    skip: z.number(),
+    take: z.number(),
+    total: z.number(),
+  }),
+})
+
+/**
+ * Inferred TypeScript types from Earn vault schemas
+ */
+export type ValidatedIndexerEarnVaultResponse = z.infer<typeof IndexerEarnVaultResponseSchema>
+export type ValidatedIndexerEarnVaultListResponse = z.infer<typeof IndexerEarnVaultListResponseSchema>
+
+/**
+ * Validates an Earn vault detail response.
+ *
+ * @param data - Raw response from /v1/earn/vault endpoint
+ * @returns Validated response or null if invalid
+ */
+export function validateEarnVaultResponse(data: unknown): ValidatedIndexerEarnVaultResponse | null {
+  const result = IndexerEarnVaultResponseSchema.safeParse(data)
+
+  if (!result.success) {
+    console.warn(
+      '[@hypurr/vaults] Invalid Earn vault response:',
+      result.error.issues.slice(0, 3).map(i => `${i.path.join('.')}: ${i.message}`)
+    )
+    return null
+  }
+
+  return result.data
+}
+
+/**
+ * Validates an Earn vault list response.
+ *
+ * @param data - Raw response from /v1/earn/vaults endpoint
+ * @returns Validated response or null if invalid
+ */
+export function validateEarnVaultListResponse(data: unknown): ValidatedIndexerEarnVaultListResponse | null {
+  const result = IndexerEarnVaultListResponseSchema.safeParse(data)
+
+  if (!result.success) {
+    console.warn(
+      '[@hypurr/vaults] Invalid Earn vault list response:',
+      result.error.issues.slice(0, 3).map(i => `${i.path.join('.')}: ${i.message}`)
+    )
+    return null
+  }
+
+  return result.data
+}
