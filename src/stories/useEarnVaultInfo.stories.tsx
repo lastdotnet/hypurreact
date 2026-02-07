@@ -1,7 +1,14 @@
 import type { Meta, StoryObj } from '@storybook/react'
 import { useEarnVaultInfo } from '../hooks/useEarnVaultInfo'
 import type { EarnVaultCategory } from '../types/earnVaultInfo'
-import { EARN_CATEGORY_PRESETS, formatAPY } from '..'
+import { EARN_CATEGORY_PRESETS } from '..'
+
+// Local formatAPY for indexer data which returns APY as percentages (e.g., 5.25 for 5.25%)
+// Note: The package's formatAPY expects decimals (0.05 for 5%) and multiplies by 100
+function formatAPY(value: number | null | undefined): string {
+  if (value === null || value === undefined) return '--'
+  return `${value.toFixed(2)}%`
+}
 
 // Real Earn vault addresses on HyperEVM
 const EARN_VAULTS = {
