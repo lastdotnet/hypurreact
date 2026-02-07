@@ -1,9 +1,14 @@
 import type { Meta, StoryObj } from '@storybook/react'
 import { useState } from 'react'
+import * as React from 'react'
 import type { Address } from 'viem'
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import { WagmiProvider, createConfig, http } from 'wagmi'
+import { mainnet } from 'wagmi/chains'
 import { useVaults } from '../hooks/useVaults'
 import { useVerifiedVaults } from '../hooks/useVerifiedVaults'
 import { useVaultInfo } from '../hooks/useVaultInfo'
+import { VaultProvider, createVaultConfig } from '../index'
 
 // Example vault addresses on HyperEVM
 const ALL_VAULTS = [
@@ -34,7 +39,16 @@ const colors = {
   warningBg: 'rgba(255, 152, 0, 0.15)',
   errorBg: 'rgba(180, 70, 70, 0.15)',
   verifiedBadge: '#4ade80',
+  onchainBlue: '#72b4fb',
 }
+
+// Chain config for custom providers
+const hyperEVM = {
+  id: 999,
+  name: 'HyperEVM',
+  nativeCurrency: { decimals: 18, name: 'HYPE', symbol: 'HYPE' },
+  rpcUrls: { default: { http: ['https://rpc.hyperliquid.xyz/evm'] } },
+} as const
 
 function VaultCard({ vaultAddress, isVerified }: { vaultAddress: Address; isVerified: boolean }) {
   const { data, isLoading } = useVaultInfo({
@@ -88,7 +102,12 @@ function VaultCard({ vaultAddress, isVerified }: { vaultAddress: Address; isVeri
   )
 }
 
-function UseVaultsDemo() {
+interface UseVaultsDemoProps {
+  scenarioLabel?: string
+  scenarioDescription?: string
+}
+
+function UseVaultsDemo({ scenarioLabel, scenarioDescription }: UseVaultsDemoProps) {
   const [showVerifiedOnly, setShowVerifiedOnly] = useState(false)
 
   const {
@@ -107,11 +126,42 @@ function UseVaultsDemo() {
     <div style={{ maxWidth: 800 }}>
       <h3 style={{ margin: '0 0 1rem 0', color: colors.foreground }}>useVaults Hook Demo</h3>
 
-      {/* Perspective Status */}
+      {/* Scenario Banner */}
+      {scenarioLabel && (
+        <div
+          style={{
+            background: scenarioLabel.includes('Failure') ? colors.errorBg : colors.warningBg,
+            border: `1px solid ${scenarioLabel.includes('Failure') ? 'rgba(180, 70, 70, 0.3)' : 'rgba(255, 152, 0, 0.3)'}`,
+            borderRadius: 8,
+            padding: '0.75rem 1rem',
+            marginBottom: '1rem',
+            fontSize: 13,
+          }}
+        >
+          <div style={{ fontWeight: 600, color: colors.foreground, marginBottom: 4 }}>
+            🧪 Test Scenario: {scenarioLabel}
+          </div>
+          {scenarioDescription && (
+            <div style={{ fontSize: 12, color: colors.mutedForeground }}>{scenarioDescription}</div>
+          )}
+        </div>
+      )}
+
+      {/* Verification Status */}
       <div
         style={{
-          background: isConfigured ? colors.successBg : colors.warningBg,
-          border: `1px solid ${isConfigured ? 'rgba(142, 231, 194, 0.3)' : 'rgba(255, 152, 0, 0.3)'}`,
+          background: verificationSource === 'indexer'
+            ? colors.successBg
+            : verificationSource === 'onchain'
+              ? 'rgba(114, 180, 251, 0.15)'
+              : colors.warningBg,
+          border: `1px solid ${
+            verificationSource === 'indexer'
+              ? 'rgba(142, 231, 194, 0.3)'
+              : verificationSource === 'onchain'
+                ? 'rgba(114, 180, 251, 0.3)'
+                : 'rgba(255, 152, 0, 0.3)'
+          }`,
           borderRadius: 8,
           padding: '0.75rem 1rem',
           marginBottom: '1rem',
@@ -125,33 +175,45 @@ function UseVaultsDemo() {
               width: 8,
               height: 8,
               borderRadius: '50%',
-              background: isConfigured ? colors.primary : 'rgb(255, 152, 0)',
+              background: verificationSource === 'indexer'
+                ? colors.primary
+                : verificationSource === 'onchain'
+                  ? colors.onchainBlue
+                  : 'rgb(255, 152, 0)',
             }}
           />
           <span>
             {isConfigured
               ? isVerifiedLoading
-                ? 'Loading verified vaults from governedPerspective...'
+                ? 'Loading verified vaults...'
                 : `GovernedPerspective configured - ${verifiedVaultsList?.length ?? 0} verified vaults`
               : 'GovernedPerspective not configured'}
           </span>
         </div>
         {isError && (
           <div style={{ color: 'rgb(180, 70, 70)', marginTop: '0.5rem', fontSize: 12 }}>
-            Error loading verified vaults
+            Error loading verified vaults from on-chain
           </div>
         )}
-        {verificationSource && (
-          <div style={{ marginTop: '0.5rem', fontSize: 12, color: colors.mutedForeground }}>
-            Verification source:{' '}
-            <span style={{
-              color: verificationSource === 'indexer' ? colors.primary : '#72b4fb',
-              fontWeight: 500
-            }}>
-              {verificationSource === 'indexer' ? 'Indexer (perspectives array)' : 'On-chain (verifiedArray)'}
-            </span>
-          </div>
-        )}
+        <div style={{ marginTop: '0.5rem', fontSize: 12, color: colors.mutedForeground }}>
+          Verification source:{' '}
+          <span
+            style={{
+              color: verificationSource === 'indexer'
+                ? colors.primary
+                : verificationSource === 'onchain'
+                  ? colors.onchainBlue
+                  : 'rgb(255, 152, 0)',
+              fontWeight: 600,
+            }}
+          >
+            {verificationSource === 'indexer'
+              ? '✓ Indexer (perspectives array)'
+              : verificationSource === 'onchain'
+                ? '✓ On-chain (verifiedArray)'
+                : '⏳ Loading...'}
+          </span>
+        </div>
       </div>
 
       {/* Filter Toggle */}
@@ -249,6 +311,65 @@ function UseVaultsDemo() {
   )
 }
 
+/**
+ * Wrapper to provide custom VaultConfig for failure scenarios.
+ * This overrides the global storybook provider for specific stories.
+ */
+function CustomProviderWrapper({
+  indexerUrl,
+  children,
+}: {
+  indexerUrl?: string
+  children: React.ReactNode
+}) {
+  const wagmiConfig = React.useMemo(
+    () =>
+      createConfig({
+        chains: [hyperEVM, mainnet],
+        transports: {
+          [hyperEVM.id]: http(hyperEVM.rpcUrls.default.http[0]),
+          [mainnet.id]: http(),
+        },
+      }),
+    [],
+  )
+
+  const vaultConfig = React.useMemo(
+    () =>
+      createVaultConfig({
+        chainId: 999,
+        usdUnitOfAccount: '0x0000000000000000000000000000000000000348',
+        usdReferenceToken: '0xb8ce59fc3717ada4c02eadf9682a9e934f625ebb',
+        indexerUrl, // Can be undefined or broken URL
+        vaultLensAddress: '0x0eaDDE9EfCf1540dcA8f94e813E12db55f8405a8',
+        governedPerspectiveAddress: '0x4936Cd82936b6862fDD66CC8c36e1828127a6b57',
+        eulerEarnGovernedPerspectiveAddress: '0x7b27dED9344D9c66FeAF58D151b52d1359aeA807',
+      }),
+    [indexerUrl],
+  )
+
+  const queryClient = React.useMemo(
+    () =>
+      new QueryClient({
+        defaultOptions: {
+          queries: {
+            retry: false, // Don't retry for clearer demo
+            staleTime: 0,
+          },
+        },
+      }),
+    [],
+  )
+
+  return (
+    <WagmiProvider config={wagmiConfig}>
+      <QueryClientProvider client={queryClient}>
+        <VaultProvider config={vaultConfig}>{children}</VaultProvider>
+      </QueryClientProvider>
+    </WagmiProvider>
+  )
+}
+
 const meta: Meta = {
   title: 'Hooks/useVaults',
   parameters: {
@@ -278,12 +399,53 @@ Hook to filter vaults by verification status from the governedPerspective.
 export default meta
 
 export const VerifiedFilter: StoryObj = {
-  name: 'Verified Filter Demo',
+  name: 'Default (Indexer → On-chain Fallback)',
   render: () => <UseVaultsDemo />,
   parameters: {
     docs: {
       description: {
-        story: 'Interactive demo showing the verified filter toggle. Toggle to show only vaults in the governedPerspective verifiedArray.',
+        story:
+          'Default behavior: Uses indexer perspectives array first, falls back to on-chain verifiedArray if indexer unavailable.',
+      },
+    },
+  },
+}
+
+export const IndexerFailure: StoryObj = {
+  name: '🧪 Indexer Failure (On-chain Fallback)',
+  render: () => (
+    <CustomProviderWrapper indexerUrl="https://invalid-indexer-url.example.com/broken">
+      <UseVaultsDemo
+        scenarioLabel="Indexer Failure"
+        scenarioDescription="Indexer URL is invalid/unreachable. System falls back to on-chain verifiedArray() call."
+      />
+    </CustomProviderWrapper>
+  ),
+  parameters: {
+    docs: {
+      description: {
+        story:
+          '**Test Scenario:** Simulates indexer being down or returning errors. The hook should automatically fall back to on-chain `verifiedArray()` call. Note the verification source changes to "On-chain".',
+      },
+    },
+  },
+}
+
+export const NoIndexer: StoryObj = {
+  name: '🧪 No Indexer Configured (On-chain Only)',
+  render: () => (
+    <CustomProviderWrapper indexerUrl={undefined}>
+      <UseVaultsDemo
+        scenarioLabel="No Indexer"
+        scenarioDescription="No indexerUrl configured. System uses on-chain verifiedArray() exclusively."
+      />
+    </CustomProviderWrapper>
+  ),
+  parameters: {
+    docs: {
+      description: {
+        story:
+          '**Test Scenario:** No indexer URL is configured in VaultConfig. The hook should use only on-chain `verifiedArray()` call for verification.',
       },
     },
   },
