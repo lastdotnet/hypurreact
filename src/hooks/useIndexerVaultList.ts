@@ -55,7 +55,7 @@ async function fetchIndexerVaultList(
 
   const body = {
     chainId,
-    limit: '500', // Fetch all vaults
+    limit: '100', // Max allowed by indexer
     page: '1',
     orderBy: 'totalSupply',
     orderDirection: 'desc',

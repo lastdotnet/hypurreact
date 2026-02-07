@@ -96,3 +96,19 @@ export {
   getProductForVault,
   filterVaultsByProduct,
 } from './types/products'
+
+// Vault list hooks with verification
+export {
+  useVaults,
+  useEarnVaults,
+  useVerifiedVaults,
+  useVerifiedEarnVaults,
+} from './hooks'
+export type {
+  UseVaultsParams,
+  UseVaultsResult,
+  UseEarnVaultsParams,
+  UseEarnVaultsResult,
+  UseVerifiedVaultsResult,
+  UseVerifiedEarnVaultsResult,
+} from './hooks'

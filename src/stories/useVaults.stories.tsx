@@ -7,25 +7,9 @@ import { WagmiProvider, createConfig, http } from 'wagmi'
 import { mainnet } from 'wagmi/chains'
 import { useVaults } from '../hooks/useVaults'
 import { useVerifiedVaults } from '../hooks/useVerifiedVaults'
+import { useIndexerVaultList } from '../hooks/useIndexerVaultList'
 import { useVaultInfo } from '../hooks/useVaultInfo'
 import { VaultProvider, createVaultConfig } from '../index'
-
-// Example vault addresses on HyperEVM
-const ALL_VAULTS = [
-  // Prime vaults
-  '0xF73c654d468f5485bF15F3470B78851a49257704',
-  '0x443100d1149D6d925Edb044248BBE32c5C7Ae955',
-  '0x8A4545827DF5446Ba120B904e5306e58acCA4E89',
-  '0xC200AaB602Cd7046389B5C8FB088884323F8dD0f',
-  '0x28fCa2611d1Dd8109c26F748Cd2CF3BB4fC6D2cD',
-  '0x83c34784e355ad2670dB77623B845273844FA480',
-  // Yield vaults
-  '0xc7e7861352df6919e7152C007832C48A777f2a4c',
-  '0x97d30B40048bA3fC6b6628cE5E02E77f35B64fE0',
-  '0x3403176f548400772c39E64564f2b148bcdFb65e',
-  '0x64a3052570F5A1c241C6c8cd32F8F9aD411e6990',
-  '0xF9BB65e113418292d1a3555515fBd64637a0BE18',
-] as Address[]
 
 const colors = {
   background: 'rgb(28, 28, 32)',
@@ -102,13 +86,33 @@ function VaultCard({ vaultAddress, isVerified }: { vaultAddress: Address; isVeri
   )
 }
 
+// Sample vault addresses for fallback scenarios (when indexer is unavailable)
+const FALLBACK_VAULTS = [
+  '0xF73c654d468f5485bF15F3470B78851a49257704', // WHYPE Prime
+  '0x443100d1149D6d925Edb044248BBE32c5C7Ae955', // kHYPE Prime
+  '0x8A4545827DF5446Ba120B904e5306e58acCA4E89', // UBTC
+  '0xC200AaB602Cd7046389B5C8FB088884323F8dD0f', // USDC Prime
+  '0x28fCa2611d1Dd8109c26F748Cd2CF3BB4fC6D2cD', // feUSD
+  '0xc7e7861352df6919e7152C007832C48A777f2a4c', // WHYPE Yield
+  '0x97d30B40048bA3fC6b6628cE5E02E77f35B64fE0', // kHYPE Yield
+] as Address[]
+
 interface UseVaultsDemoProps {
   scenarioLabel?: string
   scenarioDescription?: string
+  /** When true, use fallback vault list (for testing failure scenarios) */
+  useFallbackVaults?: boolean
 }
 
-function UseVaultsDemo({ scenarioLabel, scenarioDescription }: UseVaultsDemoProps) {
+function UseVaultsDemo({ scenarioLabel, scenarioDescription, useFallbackVaults = false }: UseVaultsDemoProps) {
   const [showVerifiedOnly, setShowVerifiedOnly] = useState(false)
+
+  // Fetch all vaults from indexer
+  const {
+    vaults: indexerVaults,
+    isLoading: isIndexerVaultsLoading,
+    isError: isIndexerVaultsError,
+  } = useIndexerVaultList()
 
   const {
     data: verifiedVaultsList,
@@ -117,8 +121,13 @@ function UseVaultsDemo({ scenarioLabel, scenarioDescription }: UseVaultsDemoProp
     isError,
   } = useVerifiedVaults()
 
+  // Use indexer vaults if available, fallback list for test scenarios, otherwise empty array
+  const allVaults = useFallbackVaults
+    ? FALLBACK_VAULTS
+    : indexerVaults ?? []
+
   const { vaults, count, verifiedSet, isLoading, verificationSource } = useVaults({
-    vaults: ALL_VAULTS,
+    vaults: allVaults,
     verified: showVerifiedOnly,
   })
 
@@ -254,10 +263,12 @@ function UseVaultsDemo({ scenarioLabel, scenarioDescription }: UseVaultsDemoProp
       >
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
           <h4 style={{ margin: 0, color: colors.foreground }}>
-            Vaults ({count}/{ALL_VAULTS.length})
+            Vaults ({count}/{allVaults.length})
           </h4>
-          {isLoading && (
-            <span style={{ color: 'rgb(255, 152, 0)', fontSize: 12 }}>Loading verification data...</span>
+          {(isLoading || isIndexerVaultsLoading) && (
+            <span style={{ color: 'rgb(255, 152, 0)', fontSize: 12 }}>
+              {isIndexerVaultsLoading ? 'Loading vaults from indexer...' : 'Loading verification data...'}
+            </span>
           )}
         </div>
 
@@ -271,7 +282,13 @@ function UseVaultsDemo({ scenarioLabel, scenarioDescription }: UseVaultsDemoProp
           ))}
           {vaults.length === 0 && (
             <div style={{ textAlign: 'center', color: colors.mutedForeground, padding: '2rem' }}>
-              {showVerifiedOnly ? 'No verified vaults found' : 'No vaults to display'}
+              {isIndexerVaultsLoading
+                ? 'Loading vaults from indexer...'
+                : isIndexerVaultsError
+                  ? 'Failed to load vaults from indexer'
+                  : showVerifiedOnly
+                    ? 'No verified vaults found'
+                    : 'No vaults to display'}
             </div>
           )}
         </div>
@@ -417,7 +434,8 @@ export const IndexerFailure: StoryObj = {
     <CustomProviderWrapper indexerUrl="https://invalid-indexer-url.example.com/broken">
       <UseVaultsDemo
         scenarioLabel="Indexer Failure"
-        scenarioDescription="Indexer URL is invalid/unreachable. System falls back to on-chain verifiedArray() call."
+        scenarioDescription="Indexer URL is invalid/unreachable. System falls back to on-chain verifiedArray() call. Uses fallback vault list for demo."
+        useFallbackVaults
       />
     </CustomProviderWrapper>
   ),
@@ -437,7 +455,8 @@ export const NoIndexer: StoryObj = {
     <CustomProviderWrapper indexerUrl={undefined}>
       <UseVaultsDemo
         scenarioLabel="No Indexer"
-        scenarioDescription="No indexerUrl configured. System uses on-chain verifiedArray() exclusively."
+        scenarioDescription="No indexerUrl configured. System uses on-chain verifiedArray() exclusively. Uses fallback vault list for demo."
+        useFallbackVaults
       />
     </CustomProviderWrapper>
   ),

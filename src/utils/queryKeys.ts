@@ -34,4 +34,7 @@ export const vaultKeys = {
 
   indexerVaultList: (params: { chainId: number }) =>
     [...vaultKeys.all(), 'indexerVaultList', params] as const,
+
+  indexerEarnVaultList: (params: { chainId: number }) =>
+    [...vaultKeys.all(), 'indexerEarnVaultList', params] as const,
 }

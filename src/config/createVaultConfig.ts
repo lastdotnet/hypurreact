@@ -37,5 +37,7 @@ export function createVaultConfig(config: VaultConfig): VaultConfig {
     indexerStaleTime: config.indexerStaleTime,
     onIndexerError: config.onIndexerError,
     vaultLensAddress: config.vaultLensAddress,
+    governedPerspectiveAddress: config.governedPerspectiveAddress,
+    eulerEarnGovernedPerspectiveAddress: config.eulerEarnGovernedPerspectiveAddress,
   }
 }

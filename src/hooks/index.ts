@@ -21,6 +21,8 @@ export { useEarnVaultLensData } from './useEarnVaultLensData'
 export type { UseEarnVaultLensDataParams, UseEarnVaultLensDataResult } from './useEarnVaultLensData'
 export { useIndexerEarnVaultData } from './useIndexerEarnVaultData'
 export type { UseIndexerEarnVaultDataParams, UseIndexerEarnVaultDataResult } from './useIndexerEarnVaultData'
+export { useIndexerEarnVaultList } from './useIndexerEarnVaultList'
+export type { UseIndexerEarnVaultListResult } from './useIndexerEarnVaultList'
 
 // Product hooks
 export { useProductVaults, useVaultProduct } from './useProductVaults'

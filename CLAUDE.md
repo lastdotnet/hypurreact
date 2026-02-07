@@ -151,8 +151,15 @@ Stories are the **primary development tool** for this library. They demonstrate 
 
 ### Core Hooks
 - `src/hooks/useVaultInfo.ts` - Main hook with source selection logic
+- `src/hooks/useEarnVaultInfo.ts` - Earn vault data with strategies
 - `src/hooks/usePrice.ts` - Price hook with lazy vault config loading
 - `src/hooks/useVaultOraclePrice.ts` - Low-level on-chain price query
+
+### Vault List & Verification Hooks
+- `src/hooks/useVaults.ts` - Vault list filtering with verified toggle
+- `src/hooks/useEarnVaults.ts` - Earn vault list filtering with verified toggle
+- `src/hooks/useVerifiedVaults.ts` - Fetch verified array from governedPerspective
+- `src/hooks/useVerifiedEarnVaults.ts` - Fetch verified array from eulerEarnGovernedPerspective
 
 ### Data Layer
 - `src/hooks/useIndexerVaultData.ts` - Indexer data fetching (with staleness check)
@@ -189,6 +196,27 @@ Each vault can use a different oracle configuration:
 - Allows per-vault oracle upgrades
 - More flexible than hardcoded global router
 
+### APY Data Format
+
+**Critical: Indexer returns APY as percentages, not decimals**
+
+The indexer API returns APY values already formatted as percentages:
+- `5.25` means 5.25% APY (NOT 0.0525)
+- Do NOT multiply by 100 when displaying
+
+**APY Components:**
+| Field | Description | Example |
+|-------|-------------|---------|
+| `baseAPY` | Lending/borrowing yield | 1.5 (1.5%) |
+| `intrinsicAPY` | Staking yield (kHYPE, wstHYPE, beHYPE) | 2.16 (2.16%) |
+| `rewardAPY` | Token reward yield | 0.5 (0.5%) |
+| `supplyAPY` / `totalAPY` | Sum of all components | 4.16 (4.16%) |
+
+**Implementation:**
+- `supplyAPY` uses `totalApy` from indexer (NOT `baseApy`)
+- `intrinsicAPY` is extracted from nested `intrinsicApy.apy` object
+- Staked assets (kHYPE, wstHYPE) have intrinsic yield from underlying staking protocols
+
 ## Common Gotchas
 
 1. **Always wrap components in VaultProvider**: Missing context causes "useVaultConfig must be used within VaultProvider" error
@@ -200,6 +228,8 @@ Each vault can use a different oracle configuration:
 4. **Staleness is checked per price, not per request**: Single indexer response can have mix of fresh/stale prices
 
 5. **Category presets are readonly tuples**: Use `as const` when defining custom category arrays for type inference
+
+6. **APY values are percentages**: Indexer returns `5.25` for 5.25%, not `0.0525`. Do NOT multiply by 100
 
 ## Memory & Performance Notes
 

@@ -540,6 +540,250 @@ This is the same behavior that occurs when the indexer is down or doesn't have a
   },
 }
 
+// Force On-Chain Demo component using forceOnchain parameter
+interface ForceOnchainDemoProps {
+  selectedVault: VaultKey
+}
+
+function ForceOnchainDemo({ selectedVault }: ForceOnchainDemoProps) {
+  const vault = VAULTS[selectedVault]
+
+  // Regular price (uses indexer)
+  const indexerPrice = usePrice({
+    vaultAddress: vault.address,
+    enabled: true,
+  })
+
+  // Force on-chain price (bypasses indexer)
+  const onchainPrice = usePrice({
+    vaultAddress: vault.address,
+    enabled: true,
+    forceOnchain: true,
+  })
+
+  return (
+    <div style={{ maxWidth: 600 }}>
+      <h3 style={{ margin: '0 0 1rem', color: colors.foreground }}>
+        usePrice - forceOnchain Comparison
+      </h3>
+
+      {/* Explanation Banner */}
+      <div
+        style={{
+          background: 'rgba(114, 180, 251, 0.15)',
+          border: '1px solid rgba(114, 180, 251, 0.3)',
+          borderRadius: 8,
+          padding: '0.75rem 1rem',
+          marginBottom: '1rem',
+          fontSize: 14,
+          color: colors.foreground,
+        }}
+      >
+        <strong>⛓ forceOnchain=true:</strong> Bypasses indexed data and fetches price directly from the on-chain oracle
+      </div>
+
+      {/* Selected Asset */}
+      <div
+        style={{
+          background: colors.muted,
+          padding: '1rem',
+          borderRadius: 8,
+          border: `1px solid ${colors.border}`,
+          marginBottom: '1rem',
+        }}
+      >
+        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+          <div
+            style={{
+              background: colors.panel,
+              borderRadius: 8,
+              padding: '0.5rem 1rem',
+              minWidth: 80,
+              textAlign: 'center',
+            }}
+          >
+            <div style={{ fontSize: 20, fontWeight: 700, color: colors.primary }}>{vault.symbol}</div>
+          </div>
+          <div>
+            <div style={{ fontWeight: 600, color: colors.foreground }}>{selectedVault}</div>
+            <div style={{ fontSize: 12, color: colors.mutedForeground }}>{vault.description}</div>
+          </div>
+        </div>
+      </div>
+
+      {/* Side by side comparison */}
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+        {/* Indexer Price */}
+        <div
+          style={{
+            background: 'rgba(142, 231, 194, 0.15)',
+            padding: '1rem',
+            borderRadius: 12,
+            border: '1px solid rgba(142, 231, 194, 0.3)',
+          }}
+        >
+          <h4 style={{ margin: '0 0 0.75rem', fontSize: 13, color: colors.mutedForeground }}>
+            Default (Indexer)
+          </h4>
+          <div style={{ display: 'grid', gap: '0.5rem' }}>
+            <div>
+              <div style={{ fontSize: 11, color: colors.mutedForeground }}>Price</div>
+              <div
+                style={{
+                  fontFamily: "'DM Mono', monospace",
+                  fontSize: 20,
+                  fontWeight: 'bold',
+                  color: colors.foreground,
+                }}
+              >
+                {indexerPrice.isLoading ? '...' : `$${indexerPrice.priceUSD.toFixed(4)}`}
+              </div>
+            </div>
+            <div
+              style={{
+                background: 'linear-gradient(135deg, #fbe572 0%, #c2f4bc 100%)',
+                padding: 1,
+                borderRadius: 5,
+                alignSelf: 'flex-start',
+              }}
+            >
+              <div
+                style={{
+                  background: 'rgb(15, 15, 17)',
+                  borderRadius: 4,
+                  padding: '2px 8px',
+                  color: colors.mutedForeground,
+                  fontSize: 11,
+                }}
+              >
+                {indexerPrice.source === 'indexer' ? '✓ Indexer' : `⛓ ${indexerPrice.source}`}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* On-Chain Price */}
+        <div
+          style={{
+            background: 'rgba(114, 180, 251, 0.15)',
+            padding: '1rem',
+            borderRadius: 12,
+            border: '1px solid rgba(114, 180, 251, 0.3)',
+          }}
+        >
+          <h4 style={{ margin: '0 0 0.75rem', fontSize: 13, color: colors.mutedForeground }}>
+            forceOnchain=true
+          </h4>
+          <div style={{ display: 'grid', gap: '0.5rem' }}>
+            <div>
+              <div style={{ fontSize: 11, color: colors.mutedForeground }}>Price</div>
+              <div
+                style={{
+                  fontFamily: "'DM Mono', monospace",
+                  fontSize: 20,
+                  fontWeight: 'bold',
+                  color: colors.foreground,
+                }}
+              >
+                {onchainPrice.isLoading ? '...' : `$${onchainPrice.priceUSD.toFixed(4)}`}
+              </div>
+            </div>
+            <div
+              style={{
+                background: 'linear-gradient(135deg, #72b4fb 0%, #a78bfa 100%)',
+                padding: 1,
+                borderRadius: 5,
+                alignSelf: 'flex-start',
+              }}
+            >
+              <div
+                style={{
+                  background: 'rgb(15, 15, 17)',
+                  borderRadius: 4,
+                  padding: '2px 8px',
+                  color: colors.mutedForeground,
+                  fontSize: 11,
+                }}
+              >
+                ⛓ {onchainPrice.source}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Code Example */}
+      <div style={{ marginTop: '1rem' }}>
+        <h4 style={{ margin: '0 0 0.5rem', fontSize: 13, color: colors.mutedForeground }}>
+          Usage
+        </h4>
+        <pre
+          style={{
+            margin: 0,
+            fontSize: 11,
+            overflow: 'auto',
+            background: colors.panel,
+            padding: '0.75rem',
+            borderRadius: 6,
+            color: colors.mutedForeground,
+            fontFamily: "'DM Mono', monospace",
+          }}
+        >
+{`const { priceUSD, source } = usePrice({
+  vaultAddress: '${vault.address}',
+  forceOnchain: true, // ← Bypass indexer
+})`}
+        </pre>
+      </div>
+
+      {/* Use Cases */}
+      <div
+        style={{
+          marginTop: '1rem',
+          padding: '0.75rem 1rem',
+          background: 'rgba(255, 152, 0, 0.1)',
+          borderRadius: 8,
+          border: '1px solid rgba(255, 152, 0, 0.2)',
+          fontSize: 12,
+          color: colors.foreground,
+        }}
+      >
+        <strong style={{ color: 'rgb(255, 180, 50)' }}>Use cases for forceOnchain:</strong>
+        <ul style={{ margin: '0.5rem 0 0', paddingLeft: '1.25rem', color: colors.mutedForeground }}>
+          <li>Verifying indexer accuracy against on-chain data</li>
+          <li>Getting real-time prices when indexer may lag</li>
+          <li>Debugging price discrepancies</li>
+        </ul>
+      </div>
+    </div>
+  )
+}
+
+export const ForceOnchain: Story = {
+  name: '⛓ Force On-Chain Price',
+  render: () => <ForceOnchainDemo selectedVault="WHYPE Prime" />,
+  parameters: {
+    docs: {
+      description: {
+        story: `
+Demonstrates the \`forceOnchain\` option which bypasses the indexer and fetches price directly from the on-chain oracle.
+
+**Key differences from "No Indexer":**
+- The indexer is still configured and available
+- Using \`forceOnchain: true\` explicitly skips it
+- Useful for verifying prices or getting real-time on-chain data
+
+**Flow with forceOnchain=true:**
+1. Skip indexer check entirely
+2. Fetch \`oracle()\`, \`unitOfAccount()\`, \`asset()\` from vault contract
+3. Query price via \`oracle.getQuote()\`
+4. Source shows "vaultOracle"
+        `,
+      },
+    },
+  },
+}
+
 export const StalePriceFallback: Story = {
   name: '📚 Stale Price Detection',
   render: () => {

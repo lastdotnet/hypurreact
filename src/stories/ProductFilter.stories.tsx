@@ -1,7 +1,12 @@
 import type { Meta, StoryObj } from '@storybook/react'
+import { useState } from 'react'
 import { useVaultInfo } from '../hooks/useVaultInfo'
 import { useEarnVaultInfo } from '../hooks/useEarnVaultInfo'
 import { useProductVaults, useVaultProduct } from '../hooks/useProductVaults'
+import { useVaults } from '../hooks/useVaults'
+import { useEarnVaults } from '../hooks/useEarnVaults'
+import { useIndexerVaultList } from '../hooks/useIndexerVaultList'
+import { useIndexerEarnVaultList } from '../hooks/useIndexerEarnVaultList'
 import type { ProductId, ProductsConfig } from '../types/products'
 import type { Address } from 'viem'
 
@@ -69,6 +74,7 @@ const colors = {
   earnColor: '#fbe572',
   primeColor: '#c2f4bc',
   yieldColor: '#72b4fb',
+  verifiedBadge: '#4ade80',
 }
 
 const productColors: Record<ProductId, string> = {
@@ -77,18 +83,54 @@ const productColors: Record<ProductId, string> = {
   'hypurrfi-yield': colors.yieldColor,
 }
 
+// Verified badge component
+function VerifiedBadge() {
+  return (
+    <span
+      style={{
+        background: colors.verifiedBadge,
+        color: 'rgb(15, 15, 17)',
+        padding: '2px 6px',
+        borderRadius: 4,
+        fontSize: 10,
+        fontWeight: 600,
+      }}
+    >
+      VERIFIED
+    </span>
+  )
+}
+
 interface ProductFilterDemoProps {
   productId: ProductId
 }
 
 function ProductFilterDemo({ productId }: ProductFilterDemoProps) {
-  const { vaults, count } = useProductVaults({
+  const [showVerifiedOnly, setShowVerifiedOnly] = useState(false)
+
+  const { vaults: allVaults, count: totalCount } = useProductVaults({
     products: PRODUCTS,
     productId,
   })
 
   const product = PRODUCTS[productId]
   const isEarnProduct = productId === 'hypurrfi-earn'
+
+  // Get verification status based on product type
+  const { vaults: filteredRegularVaults, verifiedSet: regularVerifiedSet, isPerspectiveConfigured: isRegularConfigured } = useVaults({
+    vaults: allVaults,
+    verified: showVerifiedOnly && !isEarnProduct,
+  })
+
+  const { vaults: filteredEarnVaults, verifiedSet: earnVerifiedSet, isPerspectiveConfigured: isEarnConfigured } = useEarnVaults({
+    vaults: allVaults,
+    verified: showVerifiedOnly && isEarnProduct,
+  })
+
+  // Use the appropriate filtered list based on product type
+  const displayVaults = isEarnProduct ? filteredEarnVaults : filteredRegularVaults
+  const verifiedSet = isEarnProduct ? earnVerifiedSet : regularVerifiedSet
+  const isPerspectiveConfigured = isEarnProduct ? isEarnConfigured : isRegularConfigured
 
   return (
     <div style={{ maxWidth: 800 }}>
@@ -99,7 +141,7 @@ function ProductFilterDemo({ productId }: ProductFilterDemoProps) {
           background: colors.panel,
           borderRadius: 12,
           padding: '1.25rem',
-          marginBottom: '1.5rem',
+          marginBottom: '1rem',
           border: `2px solid ${productColors[productId]}`,
         }}
       >
@@ -122,20 +164,66 @@ function ProductFilterDemo({ productId }: ProductFilterDemoProps) {
               fontSize: 12,
             }}
           >
-            {count} vaults
+            {displayVaults.length}/{totalCount} vaults
           </span>
         </div>
         <p style={{ margin: 0, color: colors.mutedForeground, fontSize: 14 }}>{product.description}</p>
       </div>
 
+      {/* Verified Filter Toggle */}
+      <div
+        style={{
+          background: colors.panel,
+          borderRadius: 8,
+          padding: '0.75rem 1rem',
+          marginBottom: '1rem',
+          border: `1px solid ${colors.border}`,
+        }}
+      >
+        <label style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', cursor: 'pointer' }}>
+          <input
+            type="checkbox"
+            checked={showVerifiedOnly}
+            onChange={e => setShowVerifiedOnly(e.target.checked)}
+            disabled={!isPerspectiveConfigured}
+            style={{ width: 16, height: 16, cursor: 'pointer' }}
+          />
+          <div>
+            <span style={{ color: colors.foreground, fontWeight: 500 }}>Show Verified Only</span>
+            <span style={{ color: colors.mutedForeground, fontSize: 12, marginLeft: '0.5rem' }}>
+              ({verifiedSet.size} verified in perspective)
+            </span>
+          </div>
+        </label>
+        {!isPerspectiveConfigured && (
+          <div style={{ color: 'rgb(255, 152, 0)', fontSize: 11, marginTop: '0.5rem' }}>
+            Perspective contract not configured
+          </div>
+        )}
+      </div>
+
       <h4 style={{ margin: '0 0 1rem 0', color: colors.mutedForeground }}>Vaults in Product</h4>
       <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-        {vaults.map(vaultAddress =>
+        {displayVaults.map(vaultAddress =>
           isEarnProduct ? (
-            <EarnVaultCard key={vaultAddress} vaultAddress={vaultAddress} />
+            <EarnVaultCard
+              key={vaultAddress}
+              vaultAddress={vaultAddress}
+              isVerified={verifiedSet.has(vaultAddress.toLowerCase())}
+            />
           ) : (
-            <VaultCard key={vaultAddress} vaultAddress={vaultAddress} productId={productId} />
+            <VaultCard
+              key={vaultAddress}
+              vaultAddress={vaultAddress}
+              productId={productId}
+              isVerified={verifiedSet.has(vaultAddress.toLowerCase())}
+            />
           ),
+        )}
+        {displayVaults.length === 0 && (
+          <div style={{ textAlign: 'center', color: colors.mutedForeground, padding: '2rem' }}>
+            {showVerifiedOnly ? 'No verified vaults found in this product' : 'No vaults to display'}
+          </div>
         )}
       </div>
     </div>
@@ -149,13 +237,13 @@ function formatApyValue(apy: number | null | undefined): string {
 }
 
 // Card for regular vaults (Prime, Yield) using useVaultInfo
-function VaultCard({ vaultAddress, productId }: { vaultAddress: Address; productId: ProductId }) {
+function VaultCard({ vaultAddress, productId, isVerified }: { vaultAddress: Address; productId?: ProductId; isVerified?: boolean }) {
   const { data, isLoading, source } = useVaultInfo({
     vaultAddress,
     options: {
       include: ['identity', 'apy'] as const,
-      product: productId,
-      products: PRODUCTS,
+      // Only apply product filter when productId is specified
+      ...(productId && { product: productId, products: PRODUCTS }),
     },
   })
 
@@ -172,11 +260,14 @@ function VaultCard({ vaultAddress, productId }: { vaultAddress: Address; product
     >
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
         <div>
-          <div style={{ fontWeight: 500, color: colors.foreground, marginBottom: 4 }}>
-            {isLoading ? 'Loading...' : data?.vaultName || 'Unknown Vault'}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: 4 }}>
+            <span style={{ fontWeight: 500, color: colors.foreground }}>
+              {isLoading ? 'Loading...' : data?.assetSymbol || data?.vaultName || 'Unknown Vault'}
+            </span>
+            {isVerified && <VerifiedBadge />}
           </div>
-          <div style={{ fontSize: 11, color: colors.mutedForeground, fontFamily: 'monospace' }}>
-            {vaultAddress.slice(0, 10)}...{vaultAddress.slice(-8)}
+          <div style={{ fontSize: 11, color: colors.mutedForeground }}>
+            {isLoading ? '' : data?.vaultSymbol || vaultAddress.slice(0, 10) + '...' + vaultAddress.slice(-8)}
           </div>
         </div>
         <div style={{ textAlign: 'right' }}>
@@ -223,7 +314,7 @@ function VaultCard({ vaultAddress, productId }: { vaultAddress: Address; product
 }
 
 // Card for Earn vaults using useEarnVaultInfo
-function EarnVaultCard({ vaultAddress }: { vaultAddress: Address }) {
+function EarnVaultCard({ vaultAddress, isVerified }: { vaultAddress: Address; isVerified?: boolean }) {
   const { data, isLoading, source } = useEarnVaultInfo({
     vaultAddress,
     options: {
@@ -246,8 +337,11 @@ function EarnVaultCard({ vaultAddress }: { vaultAddress: Address }) {
       }}
     >
       <div>
-        <div style={{ fontWeight: 500, color: colors.foreground, marginBottom: 4 }}>
-          {isLoading ? 'Loading...' : data?.vaultName || 'Unknown Vault'}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: 4 }}>
+          <span style={{ fontWeight: 500, color: colors.foreground }}>
+            {isLoading ? 'Loading...' : data?.vaultName || 'Unknown Vault'}
+          </span>
+          {isVerified && <VerifiedBadge />}
         </div>
         <div style={{ fontSize: 11, color: colors.mutedForeground, fontFamily: 'monospace' }}>
           {vaultAddress.slice(0, 10)}...{vaultAddress.slice(-8)}
@@ -427,6 +521,281 @@ export const VaultNotInProduct: Story = {
     docs: {
       description: {
         story: 'Shows the result when a vault is not in any product.',
+      },
+    },
+  },
+}
+
+// ============================================================================
+// All Vaults from Indexer (no product filter)
+// ============================================================================
+
+function AllEVKVaultsDemo() {
+  const [showVerifiedOnly, setShowVerifiedOnly] = useState(false)
+
+  // Fetch all vaults from indexer - this also returns perspectives data
+  const {
+    vaults: indexerVaults,
+    data: perspectivesMap,
+    isLoading: isIndexerLoading,
+    isError: isIndexerError,
+  } = useIndexerVaultList()
+
+  const allVaults = indexerVaults ?? []
+
+  const { vaults, count, verifiedSet, verificationSource, isPerspectiveConfigured } = useVaults({
+    vaults: allVaults,
+    verified: showVerifiedOnly,
+  })
+
+  return (
+    <div style={{ maxWidth: 900 }}>
+      <h3 style={{ margin: '0 0 1rem 0', color: colors.foreground }}>All EVK Vaults (from Indexer)</h3>
+
+      {/* Status Banner */}
+      <div
+        style={{
+          background: isIndexerError ? colors.errorBg : colors.successBg,
+          border: `1px solid ${isIndexerError ? 'rgba(180, 70, 70, 0.3)' : 'rgba(142, 231, 194, 0.3)'}`,
+          borderRadius: 8,
+          padding: '0.75rem 1rem',
+          marginBottom: '1rem',
+          fontSize: 13,
+          color: colors.foreground,
+        }}
+      >
+        {isIndexerLoading ? (
+          'Loading vaults from indexer...'
+        ) : isIndexerError ? (
+          'Failed to load vaults from indexer'
+        ) : (
+          <>
+            <strong>{allVaults.length}</strong> total vaults from /v2/vault/list
+            {verificationSource && (
+              <span style={{ marginLeft: '1rem', color: colors.mutedForeground }}>
+                (verification via {verificationSource})
+              </span>
+            )}
+          </>
+        )}
+      </div>
+
+      {/* Verified Filter Toggle */}
+      <div
+        style={{
+          background: showVerifiedOnly ? 'rgba(142, 231, 194, 0.1)' : colors.panel,
+          borderRadius: 8,
+          padding: '0.75rem 1rem',
+          marginBottom: '1rem',
+          border: `1px solid ${showVerifiedOnly ? 'rgba(142, 231, 194, 0.3)' : colors.border}`,
+        }}
+      >
+        <label style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', cursor: 'pointer' }}>
+          <input
+            type="checkbox"
+            checked={showVerifiedOnly}
+            onChange={e => setShowVerifiedOnly(e.target.checked)}
+            disabled={!isPerspectiveConfigured}
+            style={{ width: 16, height: 16, cursor: 'pointer' }}
+          />
+          <div>
+            <span style={{ color: colors.foreground, fontWeight: 500 }}>Show Verified Only</span>
+            <span style={{ color: colors.mutedForeground, fontSize: 12, marginLeft: '0.5rem' }}>
+              ({verifiedSet.size} verified in governedPerspective)
+            </span>
+          </div>
+        </label>
+        {!isPerspectiveConfigured && (
+          <div style={{ color: 'rgb(255, 152, 0)', fontSize: 11, marginTop: '0.5rem' }}>
+            ⚠️ governedPerspectiveAddress not configured
+          </div>
+        )}
+      </div>
+
+      {/* Debug Info */}
+      <div
+        style={{
+          background: colors.muted,
+          borderRadius: 8,
+          padding: '0.75rem 1rem',
+          marginBottom: '1rem',
+          fontSize: 12,
+          fontFamily: "'DM Mono', monospace",
+          color: colors.mutedForeground,
+        }}
+      >
+        <div>Filter active: <strong style={{ color: showVerifiedOnly ? colors.primary : colors.foreground }}>{showVerifiedOnly ? 'YES' : 'NO'}</strong></div>
+        <div>Perspective configured: {isPerspectiveConfigured ? '✓' : '✗'}</div>
+        <div>Verification source: {verificationSource ?? 'none'}</div>
+        <div>Perspectives map loaded: {perspectivesMap ? `✓ (${perspectivesMap.size} entries)` : '✗ (not loaded)'}</div>
+        <div>Input vaults: {allVaults.length} | Verified set: {verifiedSet.size} | Displayed: {count}</div>
+        <div style={{ marginTop: '0.5rem', color: showVerifiedOnly && count === allVaults.length ? 'rgb(180, 70, 70)' : colors.mutedForeground }}>
+          {showVerifiedOnly && count === allVaults.length && verifiedSet.size > 0
+            ? '⚠️ Filter not applied - verifiedSet has entries but count equals total'
+            : showVerifiedOnly && verifiedSet.size === 0
+            ? '⚠️ Verified set is empty - check perspectives data'
+            : ''}
+        </div>
+      </div>
+
+      {/* Vault List */}
+      <div
+        style={{
+          background: colors.panel,
+          borderRadius: 12,
+          padding: '1.25rem',
+          border: `1px solid ${colors.border}`,
+        }}
+      >
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+          <h4 style={{ margin: 0, color: colors.foreground }}>
+            Vaults ({count}/{allVaults.length})
+          </h4>
+        </div>
+
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', maxHeight: 600, overflowY: 'auto' }}>
+          {vaults.map(vaultAddress => (
+            <VaultCard
+              key={vaultAddress}
+              vaultAddress={vaultAddress}
+              isVerified={verifiedSet.has(vaultAddress.toLowerCase())}
+            />
+          ))}
+          {vaults.length === 0 && !isIndexerLoading && (
+            <div style={{ textAlign: 'center', color: colors.mutedForeground, padding: '2rem' }}>
+              {showVerifiedOnly ? 'No verified vaults found' : 'No vaults to display'}
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function AllEarnVaultsDemo() {
+  const [showVerifiedOnly, setShowVerifiedOnly] = useState(false)
+
+  // Fetch all earn vaults from indexer
+  const {
+    vaults: indexerVaults,
+    isLoading: isIndexerLoading,
+    isError: isIndexerError,
+  } = useIndexerEarnVaultList()
+
+  const allVaults = indexerVaults ?? []
+
+  const { vaults, count, verifiedSet, isPerspectiveConfigured } = useEarnVaults({
+    vaults: allVaults,
+    verified: showVerifiedOnly,
+  })
+
+  return (
+    <div style={{ maxWidth: 900 }}>
+      <h3 style={{ margin: '0 0 1rem 0', color: colors.foreground }}>All Earn Vaults (from Indexer)</h3>
+
+      {/* Status Banner */}
+      <div
+        style={{
+          background: isIndexerError ? colors.errorBg : colors.successBg,
+          border: `1px solid ${isIndexerError ? 'rgba(180, 70, 70, 0.3)' : 'rgba(142, 231, 194, 0.3)'}`,
+          borderRadius: 8,
+          padding: '0.75rem 1rem',
+          marginBottom: '1rem',
+          fontSize: 13,
+          color: colors.foreground,
+        }}
+      >
+        {isIndexerLoading ? (
+          'Loading earn vaults from indexer...'
+        ) : isIndexerError ? (
+          'Failed to load earn vaults from indexer'
+        ) : (
+          <>
+            <strong>{allVaults.length}</strong> total earn vaults from /v1/earn/vaults
+          </>
+        )}
+      </div>
+
+      {/* Verified Filter Toggle */}
+      <div
+        style={{
+          background: colors.panel,
+          borderRadius: 8,
+          padding: '0.75rem 1rem',
+          marginBottom: '1rem',
+          border: `1px solid ${colors.border}`,
+        }}
+      >
+        <label style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', cursor: 'pointer' }}>
+          <input
+            type="checkbox"
+            checked={showVerifiedOnly}
+            onChange={e => setShowVerifiedOnly(e.target.checked)}
+            disabled={!isPerspectiveConfigured}
+            style={{ width: 16, height: 16, cursor: 'pointer' }}
+          />
+          <div>
+            <span style={{ color: colors.foreground, fontWeight: 500 }}>Show Verified Only</span>
+            <span style={{ color: colors.mutedForeground, fontSize: 12, marginLeft: '0.5rem' }}>
+              ({verifiedSet.size} verified in eulerEarnGovernedPerspective)
+            </span>
+          </div>
+        </label>
+      </div>
+
+      {/* Vault List */}
+      <div
+        style={{
+          background: colors.panel,
+          borderRadius: 12,
+          padding: '1.25rem',
+          border: `1px solid ${colors.border}`,
+        }}
+      >
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+          <h4 style={{ margin: 0, color: colors.foreground }}>
+            Earn Vaults ({count}/{allVaults.length})
+          </h4>
+        </div>
+
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', maxHeight: 600, overflowY: 'auto' }}>
+          {vaults.map(vaultAddress => (
+            <EarnVaultCard
+              key={vaultAddress}
+              vaultAddress={vaultAddress}
+              isVerified={verifiedSet.has(vaultAddress.toLowerCase())}
+            />
+          ))}
+          {vaults.length === 0 && !isIndexerLoading && (
+            <div style={{ textAlign: 'center', color: colors.mutedForeground, padding: '2rem' }}>
+              {showVerifiedOnly ? 'No verified earn vaults found' : 'No earn vaults to display'}
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  )
+}
+
+export const AllEVKVaults: Story = {
+  name: 'All EVK Vaults (from Indexer)',
+  render: () => <AllEVKVaultsDemo />,
+  parameters: {
+    docs: {
+      description: {
+        story: 'Shows all EVK vaults from the indexer /v2/vault/list endpoint. Toggle verified filter to see only vaults in the governedPerspective.',
+      },
+    },
+  },
+}
+
+export const AllEarnVaults: Story = {
+  name: 'All Earn Vaults (from Indexer)',
+  render: () => <AllEarnVaultsDemo />,
+  parameters: {
+    docs: {
+      description: {
+        story: 'Shows all Earn vaults from the indexer /v1/earn/vaults endpoint (7 total). Toggle verified filter to see only vaults in the eulerEarnGovernedPerspective (4 verified).',
       },
     },
   },

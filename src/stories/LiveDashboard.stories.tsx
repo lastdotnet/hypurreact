@@ -1,8 +1,13 @@
 import type { Meta, StoryObj } from '@storybook/react'
 import * as React from 'react'
+import { useState } from 'react'
 import { useVaultInfo } from '../hooks/useVaultInfo'
 import { useEarnVaultInfo } from '../hooks/useEarnVaultInfo'
 import { useIndexerPrices } from '../hooks/useIndexerPrices'
+import { useVaults } from '../hooks/useVaults'
+import { useEarnVaults } from '../hooks/useEarnVaults'
+import { useVerifiedVaults } from '../hooks/useVerifiedVaults'
+import { useVerifiedEarnVaults } from '../hooks/useVerifiedEarnVaults'
 import type { Address } from 'viem'
 import type { ProductId } from '../types/products'
 
@@ -19,6 +24,7 @@ const colors = {
   earnColor: '#fbe572',
   primeColor: '#c2f4bc',
   yieldColor: '#72b4fb',
+  verifiedBadge: '#4ade80',
 }
 
 // Example vaults from each product
@@ -136,6 +142,24 @@ function ProductBadge({ product }: { product: ProductId }) {
   )
 }
 
+// Badge component for verified status
+function VerifiedBadge() {
+  return (
+    <span
+      style={{
+        background: colors.verifiedBadge,
+        color: 'rgb(15, 15, 17)',
+        padding: '2px 6px',
+        borderRadius: 4,
+        fontSize: 10,
+        fontWeight: 600,
+      }}
+    >
+      VERIFIED
+    </span>
+  )
+}
+
 // Data row component for detail views
 function DataRow({ label, value, highlight }: { label: string; value: React.ReactNode; highlight?: boolean }) {
   return (
@@ -166,7 +190,7 @@ function Section({ title, children }: { title: string; children: React.ReactNode
 }
 
 // Card for dashboard overview
-function VaultOverviewCard({ vaultKey }: { vaultKey: VaultKey }) {
+function VaultOverviewCard({ vaultKey, isVerified }: { vaultKey: VaultKey; isVerified?: boolean }) {
   const vault = PRODUCT_VAULTS[vaultKey]
   const isEarn = vault.product === 'hypurrfi-earn'
 
@@ -199,8 +223,11 @@ function VaultOverviewCard({ vaultKey }: { vaultKey: VaultKey }) {
     >
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '0.75rem' }}>
         <div>
-          <div style={{ fontWeight: 600, color: colors.foreground, marginBottom: 4 }}>
-            {isLoading ? 'Loading...' : data?.vaultName || vault.name}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: 4 }}>
+            <span style={{ fontWeight: 600, color: colors.foreground }}>
+              {isLoading ? 'Loading...' : data?.vaultName || vault.name}
+            </span>
+            {isVerified && <VerifiedBadge />}
           </div>
           <ProductBadge product={vault.product} />
         </div>
@@ -559,8 +586,103 @@ function IndexerStatus() {
   )
 }
 
+// Verification status component
+function VerificationStatus() {
+  const { data: verifiedVaults, isLoading: isVaultsLoading, isConfigured: isVaultsConfigured } = useVerifiedVaults()
+  const { data: verifiedEarnVaults, isLoading: isEarnLoading, isConfigured: isEarnConfigured } = useVerifiedEarnVaults()
+
+  return (
+    <div
+      style={{
+        background: colors.panel,
+        borderRadius: 8,
+        padding: '0.75rem 1rem',
+        marginBottom: '1rem',
+        display: 'flex',
+        flexDirection: 'column',
+        gap: '0.5rem',
+        fontSize: 13,
+      }}
+    >
+      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+        <div
+          style={{
+            width: 8,
+            height: 8,
+            borderRadius: '50%',
+            background: isVaultsConfigured ? colors.primary : colors.warning,
+          }}
+        />
+        <span style={{ color: colors.mutedForeground }}>
+          GovernedPerspective:{' '}
+          <span style={{ color: colors.foreground }}>
+            {!isVaultsConfigured
+              ? 'Not configured'
+              : isVaultsLoading
+                ? 'Loading...'
+                : `${verifiedVaults?.length ?? 0} verified vaults`}
+          </span>
+        </span>
+      </div>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+        <div
+          style={{
+            width: 8,
+            height: 8,
+            borderRadius: '50%',
+            background: isEarnConfigured ? colors.primary : colors.warning,
+          }}
+        />
+        <span style={{ color: colors.mutedForeground }}>
+          EulerEarnGovernedPerspective:{' '}
+          <span style={{ color: colors.foreground }}>
+            {!isEarnConfigured
+              ? 'Not configured'
+              : isEarnLoading
+                ? 'Loading...'
+                : `${verifiedEarnVaults?.length ?? 0} verified earn vaults`}
+          </span>
+        </span>
+      </div>
+    </div>
+  )
+}
+
+// Collect all vault addresses by type
+const REGULAR_VAULT_ADDRESSES = [
+  PRODUCT_VAULTS['prime-whype'].address,
+  PRODUCT_VAULTS['prime-khype'].address,
+  PRODUCT_VAULTS['prime-usdt'].address,
+  PRODUCT_VAULTS['yield-whype'].address,
+  PRODUCT_VAULTS['yield-khype'].address,
+  PRODUCT_VAULTS['yield-usdc'].address,
+] as Address[]
+
+const EARN_VAULT_ADDRESSES = [
+  PRODUCT_VAULTS['earn-usdh'].address,
+  PRODUCT_VAULTS['earn-usdc'].address,
+] as Address[]
+
 // Main dashboard with all products
 function LiveDashboard() {
+  const [showVerifiedOnly, setShowVerifiedOnly] = useState(false)
+
+  // Get verified vault sets
+  const { verifiedSet: regularVerifiedSet, isPerspectiveConfigured: isRegularConfigured } = useVaults({
+    vaults: REGULAR_VAULT_ADDRESSES,
+    verified: showVerifiedOnly,
+  })
+  const { verifiedSet: earnVerifiedSet, isPerspectiveConfigured: isEarnConfigured } = useEarnVaults({
+    vaults: EARN_VAULT_ADDRESSES,
+    verified: showVerifiedOnly,
+  })
+
+  // Helper to check if a vault is verified
+  const isVaultVerified = (address: Address, isEarn: boolean) => {
+    const set = isEarn ? earnVerifiedSet : regularVerifiedSet
+    return set.has(address.toLowerCase())
+  }
+
   return (
     <div style={{ maxWidth: 1000 }}>
       <div style={{ marginBottom: '1.5rem' }}>
@@ -571,28 +693,56 @@ function LiveDashboard() {
       </div>
 
       <IndexerStatus />
+      <VerificationStatus />
+
+      {/* Verified Filter Toggle */}
+      <div
+        style={{
+          background: colors.panel,
+          borderRadius: 8,
+          padding: '0.75rem 1rem',
+          marginBottom: '1.5rem',
+          border: `1px solid ${colors.border}`,
+        }}
+      >
+        <label style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', cursor: 'pointer' }}>
+          <input
+            type="checkbox"
+            checked={showVerifiedOnly}
+            onChange={e => setShowVerifiedOnly(e.target.checked)}
+            disabled={!isRegularConfigured && !isEarnConfigured}
+            style={{ width: 16, height: 16, cursor: 'pointer' }}
+          />
+          <div>
+            <span style={{ color: colors.foreground, fontWeight: 500 }}>Show Verified Only</span>
+            <span style={{ color: colors.mutedForeground, fontSize: 12, marginLeft: '0.5rem' }}>
+              Filter to vaults verified by perspective contracts
+            </span>
+          </div>
+        </label>
+      </div>
 
       {/* Earn Vaults */}
       <h3 style={{ color: colors.earnColor, margin: '2rem 0 1rem', fontSize: 16 }}>Earn Vaults</h3>
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '1rem' }}>
-        <VaultOverviewCard vaultKey="earn-usdh" />
-        <VaultOverviewCard vaultKey="earn-usdc" />
+        <VaultOverviewCard vaultKey="earn-usdh" isVerified={isVaultVerified(PRODUCT_VAULTS['earn-usdh'].address, true)} />
+        <VaultOverviewCard vaultKey="earn-usdc" isVerified={isVaultVerified(PRODUCT_VAULTS['earn-usdc'].address, true)} />
       </div>
 
       {/* Prime Vaults */}
       <h3 style={{ color: colors.primeColor, margin: '2rem 0 1rem', fontSize: 16 }}>Prime Vaults</h3>
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '1rem' }}>
-        <VaultOverviewCard vaultKey="prime-whype" />
-        <VaultOverviewCard vaultKey="prime-khype" />
-        <VaultOverviewCard vaultKey="prime-usdt" />
+        <VaultOverviewCard vaultKey="prime-whype" isVerified={isVaultVerified(PRODUCT_VAULTS['prime-whype'].address, false)} />
+        <VaultOverviewCard vaultKey="prime-khype" isVerified={isVaultVerified(PRODUCT_VAULTS['prime-khype'].address, false)} />
+        <VaultOverviewCard vaultKey="prime-usdt" isVerified={isVaultVerified(PRODUCT_VAULTS['prime-usdt'].address, false)} />
       </div>
 
       {/* Yield Vaults */}
       <h3 style={{ color: colors.yieldColor, margin: '2rem 0 1rem', fontSize: 16 }}>Yield Vaults</h3>
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '1rem' }}>
-        <VaultOverviewCard vaultKey="yield-whype" />
-        <VaultOverviewCard vaultKey="yield-khype" />
-        <VaultOverviewCard vaultKey="yield-usdc" />
+        <VaultOverviewCard vaultKey="yield-whype" isVerified={isVaultVerified(PRODUCT_VAULTS['yield-whype'].address, false)} />
+        <VaultOverviewCard vaultKey="yield-khype" isVerified={isVaultVerified(PRODUCT_VAULTS['yield-khype'].address, false)} />
+        <VaultOverviewCard vaultKey="yield-usdc" isVerified={isVaultVerified(PRODUCT_VAULTS['yield-usdc'].address, false)} />
       </div>
 
       <div style={{ marginTop: '2rem', fontSize: 12, color: colors.mutedForeground, textAlign: 'center' }}>

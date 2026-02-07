@@ -19,6 +19,11 @@ export interface UsePriceParams {
   enabled?: boolean
   config?: VaultConfig
   /**
+   * When true, skip indexer and fetch price directly from on-chain oracle.
+   * @default false
+   */
+  forceOnchain?: boolean
+  /**
    * Optional product filter. When provided with products config,
    * the hook will return no price if the vault doesn't belong to the specified product.
    */
@@ -45,6 +50,7 @@ export function usePrice({
   chainId,
   enabled = true,
   config: configOverride,
+  forceOnchain = false,
   product,
   products,
 }: UsePriceParams): UsePriceResult {
@@ -59,8 +65,9 @@ export function usePrice({
 
   const indexerPrices = useIndexerPrices()
 
+  // When forceOnchain is true, ignore indexer data
   let indexerPrice: number | null = null
-  if (vaultAddress && indexerPrices.data) {
+  if (!forceOnchain && vaultAddress && indexerPrices.data) {
     try {
       const normalizedVaultAddress = getAddress(vaultAddress) as Address
       indexerPrice = indexerPrices.data[normalizedVaultAddress] ?? null
@@ -70,20 +77,19 @@ export function usePrice({
   }
 
   const hasIndexerPrice = indexerPrice !== null && indexerPrice > 0
-  const indexerResolved = !indexerPrices.isLoading
+  const indexerResolved = forceOnchain || !indexerPrices.isLoading
 
   // Only fetch vault config (oracle/unitOfAccount/asset) when:
   // 1. Enabled and have vault address
   // 2. Oracle, unitOfAccount, or asset not already provided
-  // 3. Indexer has resolved AND doesn't have the price (lazy fetch)
+  // 3. forceOnchain OR (indexer has resolved AND doesn't have the price)
   // 4. Passes product filter (if specified)
   const shouldFetchVaultConfig =
     enabled &&
     passesProductFilter &&
     !!vaultAddress &&
     (!oracleAddress || !unitOfAccount || !assetAddress) &&
-    indexerResolved &&
-    !hasIndexerPrice
+    (forceOnchain || (indexerResolved && !hasIndexerPrice))
 
   const {
     data: vaultConfigData,
@@ -124,7 +130,7 @@ export function usePrice({
   const shouldFetchOracle =
     enabled &&
     passesProductFilter &&
-    !hasIndexerPrice &&
+    (forceOnchain || !hasIndexerPrice) &&
     !!finalOracleAddress &&
     !!finalUnitOfAccount &&
     !!finalAssetAddress
