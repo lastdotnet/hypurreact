@@ -1,7 +1,7 @@
 'use client'
 
 import { useMemo } from 'react'
-import { type Address, getAddress } from 'viem'
+import { type Address, getAddress, zeroAddress } from 'viem'
 import { useIndexerData } from './useIndexerData'
 import { isPriceStale } from '../utils/priceUtils'
 import type {
@@ -84,7 +84,7 @@ export function transformIndexerVaultData(item: ValidatedIndexerVaultItem): Part
     vaultName: item.vaultName ?? '',
     vaultSymbol: item.vaultSymbol ?? '',
     vaultDecimals: item.vaultDecimals ?? 18,
-    asset: item.asset ? getAddress(item.asset) as Address : '0x0000000000000000000000000000000000000000',
+    asset: item.asset ? getAddress(item.asset) as Address : zeroAddress,
     assetName: '',
     assetSymbol: item.assetSymbol ?? '',
     assetDecimals: item.assetDecimals ?? 18,

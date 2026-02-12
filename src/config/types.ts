@@ -108,5 +108,5 @@ export interface RetryConfig {
    * Return `false` to skip retries for certain errors (e.g., 404s).
    * @default Retries all errors except 4xx client errors
    */
-  shouldRetry?: (error: Error, attempt: number) => boolean
+  shouldRetry?: (error: Error, attempt?: number) => boolean
 }

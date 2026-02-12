@@ -12,15 +12,15 @@ export function defaultRetryDelay(attempt: number): number {
  * Default function to determine if an error should be retried.
  * Retries all errors except 4xx client errors (which indicate bad requests).
  */
-export function defaultShouldRetry(error: Error): boolean {
-  // Don't retry client errors (4xx)
-  const message = error.message.toLowerCase()
-  if (message.includes('400') || message.includes('bad request')) return false
-  if (message.includes('401') || message.includes('unauthorized')) return false
-  if (message.includes('403') || message.includes('forbidden')) return false
-  if (message.includes('404') || message.includes('not found')) return false
-  if (message.includes('422') || message.includes('unprocessable')) return false
-  if (message.includes('429') || message.includes('too many requests')) return true // Retry rate limits
+export function defaultShouldRetry(error: Error, _attempt?: number): boolean {
+  // Don't retry client errors (4xx) — match "4XX" status codes as whole words
+  const message = error.message
+  if (/\b400\b/.test(message) || /bad request/i.test(message)) return false
+  if (/\b401\b/.test(message) || /unauthorized/i.test(message)) return false
+  if (/\b403\b/.test(message) || /forbidden/i.test(message)) return false
+  if (/\b404\b/.test(message) || /not found/i.test(message)) return false
+  if (/\b422\b/.test(message) || /unprocessable/i.test(message)) return false
+  if (/\b429\b/.test(message) || /too many requests/i.test(message)) return true // Retry rate limits
 
   // Retry all other errors (5xx, network errors, etc.)
   return true
@@ -124,9 +124,9 @@ export const retryPresets = {
   aggressive: {
     count: 5,
     delay: (attempt: number) => Math.min(2000 * 2 ** attempt, 60_000),
-    shouldRetry: (error: Error) => {
+    shouldRetry: (error: Error, _attempt?: number) => {
       // Only skip 404s - retry everything else including other 4xx
-      return !error.message.toLowerCase().includes('404')
+      return !/\b404\b/.test(error.message) && !/not found/i.test(error.message)
     },
   } as RetryConfig,
 

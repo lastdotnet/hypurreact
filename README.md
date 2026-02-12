@@ -85,6 +85,17 @@ function VaultCard({ address }) {
 pnpm storybook
 ```
 
+Set a custom indexer URL for Storybook:
+
+```bash
+VITE_STORYBOOK_INDEXER_URL=https://your-indexer.example.com pnpm storybook
+```
+
+Storybook resolves indexer URL in this order:
+- `VITE_STORYBOOK_INDEXER_URL`
+- `VITE_INDEXER_URL`
+- default: `https://indexer-hyperevm-api-prod.up.railway.app`
+
 Stories demonstrate:
 - Price fetching (indexer vs on-chain)
 - Dashboard preset usage

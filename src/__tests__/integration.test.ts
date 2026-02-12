@@ -13,6 +13,7 @@ import type { Address } from 'viem'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import * as React from 'react'
 
+import { http, HttpResponse } from 'msw'
 import { server } from './msw/server'
 import {
   MOCK_CHAIN_ID,
@@ -196,8 +197,8 @@ describe('Integration Tests with MSW', () => {
     it('should catch invalid API responses gracefully', async () => {
       // Add a handler that returns invalid data
       server.use(
-        require('msw').http.post('https://indexer-test.example.com/v2/vault/list', () => {
-          return require('msw').HttpResponse.json({
+        http.post('https://indexer-test.example.com/v2/vault/list', () => {
+          return HttpResponse.json({
             // Missing required fields
             invalid: true,
           })

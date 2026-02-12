@@ -86,7 +86,7 @@ export const IndexerVaultItemSchema = z.object({
   asset: AddressSchema.optional(),
   assetSymbol: z.string().optional(),
   assetDecimals: z.number().optional(),
-  assetPriceTimestamp: z.string().optional(),
+  assetPriceTimestamp: z.string().nullable().optional(),
 
   // Optional financial fields
   totalAssets: z.string().optional(),
@@ -104,12 +104,12 @@ export const IndexerVaultItemSchema = z.object({
   totalApy: z.number().nullable().optional(),
 
   // Optional cap fields
-  supplyCap: z.string().optional(),
-  borrowCap: z.string().optional(),
+  supplyCap: z.string().nullable().optional(),
+  borrowCap: z.string().nullable().optional(),
   supplyCapPercentage: z.number().optional(),
 
   // Optional metadata fields
-  exposure: z.array(ExposureSchema).optional(),
+  exposure: z.array(ExposureSchema).nullable().optional(),
   products: z.array(ProductSchema).optional(),
   entities: z.array(EntitySchema).optional(),
   rewardsMetadata: z.array(RewardMetadataSchema).optional(),
@@ -126,10 +126,14 @@ export const IndexerVaultItemSchema = z.object({
 export const IndexerResponseSchema = z.object({
   items: z.array(IndexerVaultItemSchema),
   pagination: z.object({
-    page: z.number(),
-    limit: z.number(),
+    // Legacy shape: { page, limit, total }
+    page: z.number().optional(),
+    limit: z.number().optional(),
+    // Current shape: { skip, take, total }
+    skip: z.number().optional(),
+    take: z.number().optional(),
     total: z.number(),
-  }),
+  }).strict(),
 })
 
 /**

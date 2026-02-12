@@ -13,7 +13,7 @@ import type {
 } from '../types/earnVaultInfo'
 
 // Import types for transformation
-import { getAddress } from 'viem'
+import { getAddress, zeroAddress } from 'viem'
 import { isPriceStale } from '../utils/priceUtils'
 import {
   validateEarnVaultResponse,
@@ -68,8 +68,6 @@ function transformIndexerStrategy(strategy: IndexerEarnStrategy): EarnStrategy {
 function transformIndexerData(data: ValidatedIndexerEarnVaultResponse): Partial<EarnVaultInfo> {
   const vault = data.vault
 
-  const isStale = isPriceStale(vault.timestamp)
-
   const strategies = (vault.strategies ?? data.strategies ?? []).map(transformIndexerStrategy)
   const supplyQueue = (vault.supplyQueue ?? []).map(addr => getAddress(addr) as Address)
 
@@ -78,16 +76,16 @@ function transformIndexerData(data: ValidatedIndexerEarnVaultResponse): Partial<
     vaultName: vault.vaultName ?? '',
     vaultSymbol: vault.vaultSymbol ?? '',
     vaultDecimals: vault.vaultDecimals ?? 18,
-    asset: vault.asset ? (getAddress(vault.asset) as Address) : '0x0000000000000000000000000000000000000000',
+    asset: vault.asset ? (getAddress(vault.asset) as Address) : zeroAddress,
     assetName: vault.assetName ?? '',
     assetSymbol: vault.assetSymbol ?? '',
     assetDecimals: vault.assetDecimals ?? 18,
 
     totalShares: BigInt(vault.totalShares ?? '0'),
     totalAssets: BigInt(vault.totalAssets ?? '0'),
-    totalAssetsUSD: isStale ? null : (vault.totalAssetsUSD ?? null),
+    totalAssetsUSD: isPriceStale(vault.timestamp) ? null : (vault.totalAssetsUSD ?? null),
     availableAssets: BigInt(vault.availableAssets ?? '0'),
-    availableAssetsUSD: isStale ? null : (vault.availableAssetsUSD ?? null),
+    availableAssetsUSD: isPriceStale(vault.timestamp) ? null : (vault.availableAssetsUSD ?? null),
     lostAssets: BigInt(vault.lostAssets ?? '0'),
 
     apy7d: vault.apy7d ?? null,
@@ -98,26 +96,26 @@ function transformIndexerData(data: ValidatedIndexerEarnVaultResponse): Partial<
     performanceFee: BigInt(vault.performanceFee ?? '0'),
     feeReceiver: vault.feeReceiver
       ? (getAddress(vault.feeReceiver) as Address)
-      : '0x0000000000000000000000000000000000000000',
+      : zeroAddress,
     timelock: BigInt(vault.timelock ?? '0'),
     owner: vault.owner
       ? (getAddress(vault.owner) as Address)
-      : '0x0000000000000000000000000000000000000000',
+      : zeroAddress,
     creator: vault.creator
       ? (getAddress(vault.creator) as Address)
-      : '0x0000000000000000000000000000000000000000',
+      : zeroAddress,
     curator: vault.curator
       ? (getAddress(vault.curator) as Address)
-      : '0x0000000000000000000000000000000000000000',
+      : zeroAddress,
     guardian: vault.guardian
       ? (getAddress(vault.guardian) as Address)
-      : '0x0000000000000000000000000000000000000000',
+      : zeroAddress,
     evc: vault.evc
       ? (getAddress(vault.evc) as Address)
-      : '0x0000000000000000000000000000000000000000',
+      : zeroAddress,
     permit2: vault.permit2
       ? (getAddress(vault.permit2) as Address)
-      : '0x0000000000000000000000000000000000000000',
+      : zeroAddress,
 
     supplyQueue,
     strategies,

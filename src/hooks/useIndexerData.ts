@@ -36,8 +36,12 @@ export interface UseIndexerDataResult {
 
 const DEFAULT_STALE_TIME = 60_000
 
+const PAGE_SIZE = 100
+const MAX_PAGES = 10 // Safety limit to prevent infinite loops
+
 /**
  * Fetches vault data from the indexer API with validation.
+ * Automatically paginates to fetch all vaults when the total exceeds a single page.
  * @internal Exported for use by Suspense hooks
  */
 export async function fetchIndexerData(
@@ -47,45 +51,57 @@ export async function fetchIndexerData(
 ): Promise<IndexerData> {
   const url = `${indexerUrl}/v2/vault/list?chainId=${chainId}`
 
-  const body = {
-    chainId,
-    limit: '100',
-    page: '1',
-    orderBy: 'totalSupply',
-    orderDirection: 'desc',
-    onlyInWallet: false,
-    settings: {
-      disableIntrinsicApy: false,
-      disableRewardsApy: false,
-    },
-  }
-
   try {
-    const response = await fetch(url, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(body),
-    })
+    const allItems: ValidatedIndexerVaultItem[] = []
+    let page = 1
+    let total = Infinity
 
-    if (!response.ok) {
-      const error = new Error(`Indexer request failed: ${response.status} ${response.statusText}`)
-      onIndexerError?.(error)
-      throw error
-    }
+    while (allItems.length < total && page <= MAX_PAGES) {
+      const body = {
+        chainId,
+        limit: String(PAGE_SIZE),
+        page: String(page),
+        orderBy: 'totalSupply',
+        orderDirection: 'desc',
+        onlyInWallet: false,
+        settings: {
+          disableIntrinsicApy: false,
+          disableRewardsApy: false,
+        },
+      }
 
-    const rawData = await response.json()
+      const response = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      })
 
-    // Validate response with Zod schema
-    const validated = validateIndexerResponse(rawData)
-    if (!validated) {
-      const error = new Error('Indexer response failed validation')
-      onIndexerError?.(error)
-      throw error
+      if (!response.ok) {
+        const error = new Error(`Indexer request failed: ${response.status} ${response.statusText}`)
+        onIndexerError?.(error)
+        throw error
+      }
+
+      const rawData = await response.json()
+
+      const validated = validateIndexerResponse(rawData)
+      if (!validated) {
+        const error = new Error('Indexer response failed validation')
+        onIndexerError?.(error)
+        throw error
+      }
+
+      allItems.push(...validated.items)
+      total = validated.pagination.total
+
+      // Stop if this page returned fewer items than requested
+      if (validated.items.length < PAGE_SIZE) break
+      page++
     }
 
     return {
-      response: validated,
-      items: validated.items,
+      response: { items: allItems, pagination: { page: 1, limit: total, total } },
+      items: allItems,
     }
   } catch (error) {
     const err = error instanceof Error ? error : new Error(String(error))
@@ -119,12 +135,7 @@ export function useIndexerData(): UseIndexerDataResult {
   const query = useQuery({
     // All derived hooks share this query key for cache deduplication
     queryKey: vaultKeys.indexerVaultList({ chainId }),
-    queryFn: () => {
-      if (!indexerUrl) {
-        return null
-      }
-      return fetchIndexerData(indexerUrl, chainId, onIndexerError)
-    },
+    queryFn: () => fetchIndexerData(indexerUrl!, chainId, onIndexerError),
     enabled: hasIndexerUrl,
     staleTime: indexerStaleTime ?? DEFAULT_STALE_TIME,
     gcTime: 5 * 60 * 1000,
