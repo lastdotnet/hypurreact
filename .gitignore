@@ -2,3 +2,5 @@ node_modules
 dist
 *.log
 .sisyphus
+storybook-static
+test-results
