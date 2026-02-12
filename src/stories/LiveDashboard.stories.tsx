@@ -206,7 +206,7 @@ function VaultOverviewCard({ vaultKey, isVerified }: { vaultKey: VaultKey; isVer
 
   const { data, isLoading, source } = isEarn ? earnVault : regularVault
 
-  const totalAPY = isEarn ? (data as any)?.apy7d : (data as any)?.supplyAPY
+  const displayAPY = isEarn ? (data as any)?.apy7d : (data as any)?.supplyAPY
   const tvl = (data as any)?.totalAssetsUSD
 
   return (
@@ -230,7 +230,7 @@ function VaultOverviewCard({ vaultKey, isVerified }: { vaultKey: VaultKey; isVer
           <ProductBadge product={vault.product} />
         </div>
         <div style={{ textAlign: 'right' }}>
-          <div style={{ color: colors.primary, fontWeight: 700, fontSize: 18 }}>{formatAPYPercent(totalAPY)}</div>
+          <div style={{ color: colors.primary, fontWeight: 700, fontSize: 18 }}>{formatAPYPercent(displayAPY)}</div>
           <div style={{ fontSize: 11, color: colors.mutedForeground }}>
             {isEarn ? '7d APY' : 'Supply APY'}
           </div>

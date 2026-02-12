@@ -151,7 +151,7 @@ function useVaultInfo<T extends readonly VaultCategory[]>({
 | `price` | assetPrice, assetPriceTimestamp | Indexer (fallback: VaultLens)\* |
 | `identity` | vault, vaultName, vaultSymbol, vaultDecimals, asset, assetName, assetSymbol, assetDecimals | Indexer (fallback: VaultLens) |
 | `financials` | totalAssets, totalAssetsUSD, totalBorrows, totalBorrowsUSD, cash, cashUSD, totalShares, utilization | Indexer (fallback: VaultLens) |
-| `apy` | supplyAPY, borrowAPY, totalAPY, rewardAPY, baseAPY | Indexer (fallback: VaultLens) |
+| `apy` | supplyAPY, borrowAPY, baseAPY, intrinsicAPY, rewardAPY | Indexer (fallback: VaultLens) |
 | `caps` | supplyCap, borrowCap, supplyCapPercentage | Indexer (fallback: VaultLens) |
 | `collateral` | collateralLTVs, exposure | Indexer (fallback: VaultLens) |
 | `metadata` | products, entities, rewardsMetadata, governorType, governorAdmin | Indexer only |
@@ -178,11 +178,11 @@ function useVaultInfo<T extends readonly VaultCategory[]>({
 
 | Field | Description | Source |
 |-------|-------------|--------|
-| `baseAPY` | Lending/borrowing yield | Indexer |
+| `supplyAPY` | Total supply APY (base + intrinsic + reward) | Indexer (uses `totalApy` field) |
+| `baseAPY` | Lending yield from interest rate model | Indexer |
 | `intrinsicAPY` | Staking yield (kHYPE, wstHYPE, beHYPE) | Indexer (nested `intrinsicApy.apy`) |
 | `rewardAPY` | Token reward incentives | Indexer |
-| `supplyAPY` | Total supply APY (base + intrinsic + reward) | Uses `totalApy` from indexer |
-| `totalAPY` | Same as supplyAPY | Indexer |
+| `borrowAPY` | Interest rate borrowers pay | VaultLens only (not from indexer) |
 
 **Important Implementation Details:**
 
@@ -190,7 +190,9 @@ function useVaultInfo<T extends readonly VaultCategory[]>({
 
 2. **`intrinsicAPY` is extracted from nested object**: The indexer returns `intrinsicApy: { apy: 2.16, provider: "KINETIQ" }`. The hook extracts `intrinsicApy.apy`.
 
-3. **Earn vault APY fields** (`apy7d`, `apy30d`, `apy90d`, `apyCurrent`) are also already percentages.
+3. **`borrowAPY` requires VaultLens**: The indexer doesn't provide borrow APY. If you need `borrowAPY`, request the `irmConfig` category or use `forceOnchain: true`.
+
+4. **Earn vault APY fields** (`apy7d`, `apy30d`, `apy90d`, `apyCurrent`) are also already percentages.
 
 **Example:**
 ```typescript

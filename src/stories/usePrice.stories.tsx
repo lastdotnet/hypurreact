@@ -28,6 +28,11 @@ const VAULTS = {
     symbol: 'kHYPE',
     description: 'kHYPE Yield vault',
   },
+  'hwHYPE Yield': {
+    address: '0xBb7DC37dbc108d40BcdD60403EF7bFDD6489071E' as Address,
+    symbol: 'hwHYPE',
+    description: 'Hyperwave staked HYPE',
+  },
   'USDC Vault': {
     address: '0xC200AaB602Cd7046389B5C8FB088884323F8dD0f' as Address,
     symbol: 'USDC',
@@ -280,6 +285,21 @@ export const KHYPEPrice: Story = {
     docs: {
       description: {
         story: 'Fetches kHYPE (Kinto staked HYPE) price. Tracks HYPE with potential staking premium.',
+      },
+    },
+  },
+}
+
+export const HWHYPEPrice: Story = {
+  name: 'hwHYPE Price',
+  args: {
+    selectedVault: 'hwHYPE Yield',
+    enabled: true,
+  },
+  parameters: {
+    docs: {
+      description: {
+        story: 'Fetches hwHYPE (Hyperwave staked HYPE) price.',
       },
     },
   },

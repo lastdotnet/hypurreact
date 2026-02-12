@@ -1,6 +1,19 @@
 export { createVaultConfig } from './config'
-export type { VaultConfig } from './config'
-export { vaultKeys, calculateAPY, calculateAPYFromSharePrices, formatAPY, formatAPYPercent } from './utils'
+export type { VaultConfig, RetryConfig } from './config'
+export {
+  vaultKeys,
+  calculateAPY,
+  calculateAPYFromSharePrices,
+  formatAPY,
+  formatAPYPercent,
+  // Retry utilities
+  getRetryOptions,
+  retryPresets,
+  // Prefetch utilities
+  prefetchVaultList,
+  prefetchEarnVault,
+  prefetchEarnVaultList,
+} from './utils'
 export { VaultProvider, useVaultConfig } from './context'
 export type { VaultProviderProps } from './context'
 
@@ -112,3 +125,26 @@ export type {
   UseVerifiedVaultsResult,
   UseVerifiedEarnVaultsResult,
 } from './hooks'
+
+// Suspense-enabled hooks for use with React Suspense boundaries
+export {
+  useVaultInfoSuspense,
+  useEarnVaultInfoSuspense,
+} from './hooks'
+export type {
+  UseVaultInfoSuspenseParams,
+  UseVaultInfoSuspenseResult,
+  UseEarnVaultInfoSuspenseParams,
+  UseEarnVaultInfoSuspenseResult,
+} from './hooks'
+
+// Error boundary components
+export {
+  VaultErrorBoundary,
+  VaultErrorBoundaryProvider,
+  useResetVaultErrorBoundary,
+} from './components'
+export type {
+  VaultErrorBoundaryProps,
+  FallbackRenderProps,
+} from './components'

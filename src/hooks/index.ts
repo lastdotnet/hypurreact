@@ -5,6 +5,8 @@ export type { UsePriceParams, UsePriceResult } from './usePrice'
 export { usePriceQueryOptions } from './usePriceQueryOptions'
 export { useIndexerPrices } from './useIndexerPrices'
 export type { UseIndexerPricesResult, IndexerPriceMap } from './useIndexerPrices'
+export { useIndexerData } from './useIndexerData'
+export type { UseIndexerDataResult, IndexerData } from './useIndexerData'
 export { useVaultInfo } from './useVaultInfo'
 export type { UseVaultInfoParams } from './useVaultInfo'
 export { useVaultLensData } from './useVaultLensData'
@@ -42,3 +44,15 @@ export { useVerifiedVaults } from './useVerifiedVaults'
 export type { UseVerifiedVaultsResult } from './useVerifiedVaults'
 export { useVerifiedEarnVaults } from './useVerifiedEarnVaults'
 export type { UseVerifiedEarnVaultsResult } from './useVerifiedEarnVaults'
+
+// Suspense-enabled hooks
+export { useVaultInfoSuspense } from './useVaultInfoSuspense'
+export type {
+  UseVaultInfoSuspenseParams,
+  UseVaultInfoSuspenseResult,
+} from './useVaultInfoSuspense'
+export { useEarnVaultInfoSuspense } from './useEarnVaultInfoSuspense'
+export type {
+  UseEarnVaultInfoSuspenseParams,
+  UseEarnVaultInfoSuspenseResult,
+} from './useEarnVaultInfoSuspense'

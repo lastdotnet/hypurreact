@@ -12,15 +12,32 @@ export const PRICE_STALENESS_THRESHOLD = 15 * 60 * 1000 // 15 minutes
  * 2. Timestamp is invalid (unparseable)
  * 3. Timestamp is older than PRICE_STALENESS_THRESHOLD
  *
- * @param timestamp - ISO 8601 timestamp string from indexer
+ * Supports:
+ * - ISO 8601 timestamps (e.g. "2026-02-11T13:00:00.000Z")
+ * - Unix timestamps in seconds (e.g. "1770758861")
+ * - Unix timestamps in milliseconds (e.g. "1770758861000")
+ *
+ * @param timestamp - Timestamp value from indexer
  * @returns true if price is stale and should trigger on-chain fallback
  */
-export function isPriceStale(timestamp: string | undefined): boolean {
+export function isPriceStale(timestamp: string | null | undefined): boolean {
   if (!timestamp) return true
 
   try {
-    const priceTime = new Date(timestamp).getTime()
-    if (isNaN(priceTime)) return true // Invalid timestamp
+    const normalized = timestamp.trim()
+
+    let priceTime: number
+    if (/^\d+$/.test(normalized)) {
+      // Numeric timestamp from some indexer endpoints:
+      // - 10 digits: seconds
+      // - 13 digits: milliseconds
+      const raw = Number(normalized)
+      if (!Number.isFinite(raw)) return true
+      priceTime = raw < 1e11 ? raw * 1000 : raw
+    } else {
+      priceTime = new Date(normalized).getTime()
+    }
+    if (isNaN(priceTime)) return true
 
     const now = Date.now()
     const age = now - priceTime

@@ -2,7 +2,7 @@
 
 React hooks for Euler vault data on HyperEVM. Built on [wagmi](https://wagmi.sh/) and [TanStack Query](https://tanstack.com/query).
 
-> **Breaking Change (v0.2.0):** `routerAddress` removed from config. Oracle addresses are now fetched automatically from each vault. See [Migration Guide](./docs/AGENT_INTEGRATION.md#breaking-changes-v020).
+> **Note:** Oracle addresses are fetched automatically from each vault - no `routerAddress` needed in config.
 
 ## Core Hook: `useVaultInfo`
 
@@ -84,6 +84,17 @@ function VaultCard({ address }) {
 ```bash
 pnpm storybook
 ```
+
+Set a custom indexer URL for Storybook:
+
+```bash
+VITE_STORYBOOK_INDEXER_URL=https://your-indexer.example.com pnpm storybook
+```
+
+Storybook resolves indexer URL in this order:
+- `VITE_STORYBOOK_INDEXER_URL`
+- `VITE_INDEXER_URL`
+- default: `https://indexer-hyperevm-api-prod.up.railway.app`
 
 Stories demonstrate:
 - Price fetching (indexer vs on-chain)

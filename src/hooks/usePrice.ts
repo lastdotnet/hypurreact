@@ -42,6 +42,54 @@ export interface UsePriceResult {
   source: 'vaultOracle' | 'indexer' | 'none'
 }
 
+/**
+ * Fetches the USD price for a vault's underlying asset.
+ *
+ * Uses a lazy-loading strategy for optimal performance:
+ * 1. First checks indexer for cached price (fast, no RPC calls)
+ * 2. If indexer has no price or price is stale (>15 min), fetches vault config
+ * 3. Queries on-chain oracle for authoritative price
+ *
+ * @param params - Hook parameters
+ * @param params.vaultAddress - The vault address (used to lookup indexer price and fetch oracle config)
+ * @param params.assetAddress - Optional asset address (fetched from vault if not provided)
+ * @param params.oracleAddress - Optional oracle address (fetched from vault if not provided)
+ * @param params.unitOfAccount - Optional unit of account (fetched from vault if not provided)
+ * @param params.chainId - Optional chain ID (uses config chainId if not provided)
+ * @param params.enabled - Whether to enable the query (default: true)
+ * @param params.config - Optional config override
+ * @param params.forceOnchain - Skip indexer and fetch directly from oracle (default: false)
+ * @param params.product - Optional product filter
+ * @param params.products - Products configuration for filtering
+ *
+ * @returns Price data with source information
+ *
+ * @example
+ * ```tsx
+ * import { usePrice } from '@hypurr/vaults'
+ *
+ * function PriceDisplay({ vaultAddress }: { vaultAddress: Address }) {
+ *   const { priceUSD, isLoading, source } = usePrice({ vaultAddress })
+ *
+ *   if (isLoading) return <span>Loading...</span>
+ *
+ *   return (
+ *     <span>
+ *       ${priceUSD.toFixed(2)}
+ *       <small>({source})</small>
+ *     </span>
+ *   )
+ * }
+ * ```
+ *
+ * @example Force on-chain price
+ * ```tsx
+ * const { priceUSD } = usePrice({
+ *   vaultAddress: '0x...',
+ *   forceOnchain: true, // Always query oracle, skip indexer
+ * })
+ * ```
+ */
 export function usePrice({
   assetAddress,
   vaultAddress,

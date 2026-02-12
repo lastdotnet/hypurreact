@@ -1,33 +1,36 @@
 'use client'
 
-import { useQuery } from '@tanstack/react-query'
-import { type Address, getAddress, zeroAddress } from 'viem'
+import type { Address } from 'viem'
+import { useSuspenseQuery } from '@tanstack/react-query'
 import { useVaultConfig } from '../context'
 import { vaultKeys } from '../utils/queryKeys'
+import type {
+  EarnVaultCategory,
+  EarnVaultInfo,
+  EarnVaultInfoSource,
+  PartialEarnVaultInfo,
+  UseEarnVaultInfoOptions,
+} from '../types/earnVaultInfo'
+
+// Import types for transformation
+import { getAddress, zeroAddress } from 'viem'
 import { isPriceStale } from '../utils/priceUtils'
 import {
   validateEarnVaultResponse,
   type ValidatedIndexerEarnVaultResponse,
 } from '../utils/indexerSchema'
-import type {
-  EarnVaultInfo,
-  EarnStrategy,
-  EarnStrategyStatus,
-} from '../types/earnVaultInfo'
+import type { EarnStrategy, EarnStrategyStatus } from '../types/earnVaultInfo'
 
-export interface UseIndexerEarnVaultDataParams {
+export interface UseEarnVaultInfoSuspenseParams<T extends readonly EarnVaultCategory[]> {
   vaultAddress: Address
-  enabled?: boolean
+  options: UseEarnVaultInfoOptions<T>
 }
 
-export interface UseIndexerEarnVaultDataResult {
-  data: Partial<EarnVaultInfo> | undefined
-  isLoading: boolean
-  isError: boolean
-  error: Error | null
+export interface UseEarnVaultInfoSuspenseResult<T extends readonly EarnVaultCategory[]> {
+  data: PartialEarnVaultInfo<T> | undefined
+  source: EarnVaultInfoSource
 }
 
-// Strategy type from validated response
 type IndexerEarnStrategy = NonNullable<ValidatedIndexerEarnVaultResponse['vault']['strategies']>[number]
 
 function getStrategyStatus(strategy: IndexerEarnStrategy): EarnStrategyStatus {
@@ -36,7 +39,6 @@ function getStrategyStatus(strategy: IndexerEarnStrategy): EarnStrategyStatus {
     if (strategy.status === 'pending_removal') return 'pending_removal'
     if (strategy.status === 'removed') return 'removed'
   }
-  // Infer status from removableAt if not explicitly set
   const removableAt = BigInt(strategy.removableAt ?? '0')
   if (removableAt > 0n && removableAt < BigInt(Math.floor(Date.now() / 1000))) {
     return 'removed'
@@ -120,7 +122,7 @@ function transformIndexerData(data: ValidatedIndexerEarnVaultResponse): Partial<
   }
 }
 
-async function fetchIndexerEarnVaultData(
+async function fetchEarnVaultData(
   indexerUrl: string,
   chainId: number,
   vaultAddress: Address,
@@ -140,8 +142,6 @@ async function fetchIndexerEarnVaultData(
   }
 
   const rawData = await response.json()
-
-  // Validate API response against schema
   const data = validateEarnVaultResponse(rawData)
   if (!data?.vault) {
     return null
@@ -150,31 +150,87 @@ async function fetchIndexerEarnVaultData(
   return transformIndexerData(data)
 }
 
-export function useIndexerEarnVaultData({
+/**
+ * Suspense-enabled version of useEarnVaultInfo.
+ *
+ * This hook will suspend the component until data is loaded, enabling
+ * use with React Suspense boundaries and streaming SSR.
+ *
+ * @param params - Hook parameters
+ * @param params.vaultAddress - The Earn vault contract address
+ * @param params.options - Configuration options
+ * @param params.options.include - Categories to fetch
+ *
+ * @returns Query result with typed data based on requested categories
+ *
+ * @example
+ * ```tsx
+ * import { Suspense } from 'react'
+ * import { useEarnVaultInfoSuspense, EARN_CATEGORY_PRESETS } from '@hypurr/vaults'
+ *
+ * function EarnVaultCard({ address }: { address: Address }) {
+ *   const { data, source } = useEarnVaultInfoSuspense({
+ *     vaultAddress: address,
+ *     options: { include: EARN_CATEGORY_PRESETS.dashboard }
+ *   })
+ *
+ *   return (
+ *     <div>
+ *       <h2>{data?.vaultName}</h2>
+ *       <p>7d APY: {data?.apy7d?.toFixed(2)}%</p>
+ *     </div>
+ *   )
+ * }
+ *
+ * // Usage with Suspense boundary
+ * function App() {
+ *   return (
+ *     <Suspense fallback={<div>Loading...</div>}>
+ *       <EarnVaultCard address="0x..." />
+ *     </Suspense>
+ *   )
+ * }
+ * ```
+ *
+ * @see {@link useEarnVaultInfo} for the non-Suspense version with VaultLens fallback
+ */
+export function useEarnVaultInfoSuspense<T extends readonly EarnVaultCategory[]>({
   vaultAddress,
-  enabled = true,
-}: UseIndexerEarnVaultDataParams): UseIndexerEarnVaultDataResult {
+  options,
+}: UseEarnVaultInfoSuspenseParams<T>): UseEarnVaultInfoSuspenseResult<T> {
   const config = useVaultConfig()
+  const categories = options.include
 
-  const hasIndexerUrl = !!config.indexerUrl
+  const source: EarnVaultInfoSource = {
+    indexer: false,
+    vaultLens: false,
+    failedSources: [],
+    categoriesFromIndexer: [],
+    categoriesFromVaultLens: [],
+  }
 
-  const query = useQuery({
+  if (!config.indexerUrl) {
+    return {
+      data: undefined,
+      source,
+    }
+  }
+
+  // Use suspense query for the Earn vault data
+  const { data } = useSuspenseQuery({
     queryKey: vaultKeys.indexerEarnVault({ chainId: config.chainId, vaultAddress }),
-    queryFn: () => {
-      if (!config.indexerUrl) {
-        return null
-      }
-      return fetchIndexerEarnVaultData(config.indexerUrl, config.chainId, vaultAddress)
-    },
-    enabled: enabled && hasIndexerUrl && !!vaultAddress,
+    queryFn: () => fetchEarnVaultData(config.indexerUrl!, config.chainId, vaultAddress),
     staleTime: config.indexerStaleTime ?? 60_000,
     gcTime: 5 * 60 * 1000,
   })
 
+  if (data) {
+    source.indexer = true
+    source.categoriesFromIndexer = [...categories]
+  }
+
   return {
-    data: query.data ?? undefined,
-    isLoading: query.isLoading,
-    isError: query.isError,
-    error: query.error,
+    data: data as PartialEarnVaultInfo<T> | undefined,
+    source,
   }
 }

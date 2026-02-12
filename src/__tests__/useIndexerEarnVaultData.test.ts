@@ -132,6 +132,40 @@ describe('useIndexerEarnVaultData', () => {
       expect(fetchCall[0]).not.toContain('vault=0x') // Ensure old param name isn't used
       expect(fetchCall[0]).toContain('chainId=999')
     })
+
+    it('should null USD financial fields when indexer timestamp is stale', async () => {
+      const oldUnixSeconds = String(Math.floor(Date.now() / 1000) - 7 * 24 * 60 * 60) // 7 days ago
+      const staleTimestampResponse = {
+        ...MOCK_INDEXER_RESPONSE,
+        vault: {
+          ...MOCK_INDEXER_RESPONSE.vault,
+          timestamp: oldUnixSeconds,
+          totalAssetsUSD: 12345.67,
+          availableAssetsUSD: 2345.67,
+        },
+      }
+
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: async () => staleTimestampResponse,
+      })
+
+      const { result } = renderHook(
+        () =>
+          useIndexerEarnVaultData({
+            vaultAddress: MOCK_VAULT_ADDRESS,
+          }),
+        { wrapper: createWrapper() },
+      )
+
+      await waitFor(() => {
+        expect(result.current.isLoading).toBe(false)
+      })
+
+      expect(result.current.data?.totalAssetsUSD).toBeNull()
+      expect(result.current.data?.availableAssetsUSD).toBeNull()
+      expect(result.current.isError).toBe(false)
+    })
   })
 
   describe('handles errors', () => {

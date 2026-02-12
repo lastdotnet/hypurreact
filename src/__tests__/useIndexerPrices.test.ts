@@ -18,12 +18,14 @@ const MOCK_CONFIG_WITH_INDEXER = {
   usdReferenceToken: '0xb8ce59fc3717ada4c02eadf9682a9e934f625ebb' as const,
   indexerUrl: MOCK_INDEXER_URL,
   indexerStaleTime: 60000,
+  retry: { count: 0 }, // Disable retries in tests for immediate error feedback
 }
 
 const MOCK_CONFIG_WITHOUT_INDEXER = {
   chainId: MOCK_CHAIN_ID,
   usdUnitOfAccount: '0x0000000000000000000000000000000000000348' as const,
   usdReferenceToken: '0xb8ce59fc3717ada4c02eadf9682a9e934f625ebb' as const,
+  retry: { count: 0 }, // Disable retries in tests
 }
 
 const MOCK_INDEXER_RESPONSE = {
@@ -91,6 +93,40 @@ describe('useIndexerPrices', () => {
       expect(result.current.data?.['0xC200AaB602Cd7046389B5C8FB088884323F8dD0f']).toBe(1.0001)
       expect(result.current.data?.['0xF73c654d468f5485bF15F3470B78851a49257704']).toBe(25.5)
       expect(result.current.data?.['0x8A4545827DF5446Ba120B904e5306e58acCA4E89']).toBeNull()
+    })
+
+    it('should tolerate nullable optional cap/metadata fields from indexer', async () => {
+      vi.mocked(useVaultConfig).mockReturnValue(MOCK_CONFIG_WITH_INDEXER)
+
+      global.fetch = vi.fn().mockResolvedValue({
+        ok: true,
+        json: () =>
+          Promise.resolve({
+            items: [
+              {
+                vault: '0xC200AaB602Cd7046389B5C8FB088884323F8dD0f',
+                assetPrice: 1.0001,
+                assetPriceTimestamp: new Date(Date.now() - 5 * 60 * 1000).toISOString(),
+                supplyCap: null,
+                borrowCap: null,
+                exposure: null,
+              },
+            ],
+            // New indexer shape uses skip/take instead of page/limit
+            pagination: { skip: 0, take: 100, total: 1 },
+          }),
+      })
+
+      const { result } = renderHook(() => useIndexerPrices(), {
+        wrapper: createWrapper(),
+      })
+
+      await waitFor(() => {
+        expect(result.current.isSuccess).toBe(true)
+      })
+
+      expect(result.current.isError).toBe(false)
+      expect(result.current.data?.['0xC200AaB602Cd7046389B5C8FB088884323F8dD0f']).toBe(1.0001)
     })
   })
 

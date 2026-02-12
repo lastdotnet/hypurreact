@@ -1,9 +1,8 @@
 'use client'
 
-import { useQuery } from '@tanstack/react-query'
+import { useMemo } from 'react'
 import { type Address, getAddress } from 'viem'
-import { useVaultConfig } from '../context'
-import { vaultKeys } from '../utils/queryKeys'
+import { useIndexerData } from './useIndexerData'
 
 export interface IndexerVaultListItem {
   vault: Address
@@ -12,7 +11,7 @@ export interface IndexerVaultListItem {
 
 export interface UseIndexerVaultListResult {
   /**
-   * Map of vault address to its perspectives array
+   * Map of vault address (lowercase) to its perspectives array
    */
   data: Map<string, Address[]> | undefined
   /**
@@ -33,78 +32,12 @@ export interface UseIndexerVaultListResult {
   error: Error | null
 }
 
-interface IndexerVaultItem {
-  vault: string
-  perspectives?: string[]
-}
-
-interface IndexerResponse {
-  items: IndexerVaultItem[]
-  pagination: {
-    page: number
-    limit: number
-    total: number
-  }
-}
-
-async function fetchIndexerVaultList(
-  indexerUrl: string,
-  chainId: number,
-): Promise<{ vaults: Address[]; perspectivesMap: Map<string, Address[]> }> {
-  const url = `${indexerUrl}/v2/vault/list?chainId=${chainId}`
-
-  const body = {
-    chainId,
-    limit: '100', // Max allowed by indexer
-    page: '1',
-    orderBy: 'totalSupply',
-    orderDirection: 'desc',
-    onlyInWallet: false,
-  }
-
-  const response = await fetch(url, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(body),
-  })
-
-  if (!response.ok) {
-    throw new Error(`Indexer request failed: ${response.status} ${response.statusText}`)
-  }
-
-  const data: IndexerResponse = await response.json()
-
-  const vaults: Address[] = []
-  const perspectivesMap = new Map<string, Address[]>()
-
-  for (const item of data.items) {
-    try {
-      const vaultAddress = getAddress(item.vault) as Address
-      const normalizedKey = vaultAddress.toLowerCase()
-      vaults.push(vaultAddress)
-
-      const perspectives = (item.perspectives ?? [])
-        .map(p => {
-          try {
-            return getAddress(p) as Address
-          } catch {
-            return null
-          }
-        })
-        .filter((p): p is Address => p !== null)
-
-      perspectivesMap.set(normalizedKey, perspectives)
-    } catch {
-      // Skip invalid addresses
-    }
-  }
-
-  return { vaults, perspectivesMap }
-}
-
 /**
  * Hook to fetch the full vault list from the indexer with perspectives data.
  * Used to determine vault verification status without on-chain calls.
+ *
+ * Derives data from the shared indexer cache (useIndexerData),
+ * so multiple hooks calling the indexer share a single API request.
  *
  * @example
  * ```tsx
@@ -122,27 +55,47 @@ async function fetchIndexerVaultList(
  * ```
  */
 export function useIndexerVaultList(): UseIndexerVaultListResult {
-  const config = useVaultConfig()
-  const hasIndexerUrl = !!config.indexerUrl
+  const { data: indexerData, isLoading, isError, error } = useIndexerData()
 
-  const query = useQuery({
-    queryKey: vaultKeys.indexerVaultList({ chainId: config.chainId }),
-    queryFn: () => {
-      if (!config.indexerUrl) {
-        return null
+  // Derive vault list and perspectives map from shared data
+  const { vaults, perspectivesMap } = useMemo(() => {
+    if (!indexerData?.items) {
+      return { vaults: undefined, perspectivesMap: undefined }
+    }
+
+    const vaultList: Address[] = []
+    const map = new Map<string, Address[]>()
+
+    for (const item of indexerData.items) {
+      try {
+        const vaultAddress = getAddress(item.vault) as Address
+        const normalizedKey = vaultAddress.toLowerCase()
+        vaultList.push(vaultAddress)
+
+        const perspectives = (item.perspectives ?? [])
+          .map(p => {
+            try {
+              return getAddress(p) as Address
+            } catch {
+              return null
+            }
+          })
+          .filter((p): p is Address => p !== null)
+
+        map.set(normalizedKey, perspectives)
+      } catch {
+        // Skip invalid addresses
       }
-      return fetchIndexerVaultList(config.indexerUrl, config.chainId)
-    },
-    enabled: hasIndexerUrl,
-    staleTime: config.indexerStaleTime ?? 60_000,
-    gcTime: 5 * 60 * 1000,
-  })
+    }
+
+    return { vaults: vaultList, perspectivesMap: map }
+  }, [indexerData?.items])
 
   return {
-    data: query.data?.perspectivesMap,
-    vaults: query.data?.vaults,
-    isLoading: query.isLoading,
-    isError: query.isError,
-    error: query.error,
+    data: perspectivesMap,
+    vaults,
+    isLoading,
+    isError,
+    error,
   }
 }

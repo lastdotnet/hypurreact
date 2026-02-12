@@ -186,6 +186,12 @@ const hyperEVM = {
   },
 } as const
 
+const storybookEnv = (import.meta as ImportMeta & { env?: Record<string, string | undefined> }).env
+const storybookIndexerUrl =
+  storybookEnv?.VITE_STORYBOOK_INDEXER_URL ??
+  storybookEnv?.VITE_INDEXER_URL ??
+  'https://indexer-hyperevm-api-prod.up.railway.app'
+
 const wagmiConfig = createConfig({
   chains: [hyperEVM, mainnet],
   transports: {
@@ -202,7 +208,7 @@ const vaultConfig = createVaultConfig({
   chainId: 999,
   usdUnitOfAccount: '0x0000000000000000000000000000000000000348',
   usdReferenceToken: '0xb8ce59fc3717ada4c02eadf9682a9e934f625ebb',
-  indexerUrl: 'https://indexer-hyperevm-api-prod.up.railway.app',
+  indexerUrl: storybookIndexerUrl,
   indexerStaleTime: 30_000,
   vaultLensAddress: '0x0eaDDE9EfCf1540dcA8f94e813E12db55f8405a8',
   // Perspective addresses for verified vault filtering

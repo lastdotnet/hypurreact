@@ -105,8 +105,9 @@ export function useVaults({ vaults, verified = false }: UseVaultsParams): UseVau
   } = useIndexerVaultList()
 
   // On-chain fallback: verifiedArray() from governedPerspective contract
-  // Only enable if indexer failed or not available
-  const shouldUseOnchain = isIndexerError || (!isIndexerLoading && !indexerPerspectivesMap)
+  // Only enable if indexer failed or returned undefined (not available)
+  // Note: empty map is valid (no vaults), so check for undefined specifically
+  const shouldUseOnchain = isIndexerError || (indexerPerspectivesMap === undefined && !isIndexerLoading)
   const {
     data: onchainVerifiedVaults,
     isLoading: isOnchainLoading,
